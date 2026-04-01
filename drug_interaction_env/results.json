@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-04-01T07:24:09.896786+00:00",
+  "seed": 42,
+  "model": "gpt-4o-mini",
+  "n_episodes": 3,
+  "mean_score": 0.13333333333333333,
+  "std_score": 0.10274023338281628,
+  "p25": 0.075,
+  "p50": 0.15,
+  "p75": 0.2,
+  "safety_violations": 0,
+  "by_difficulty": {
+    "easy": 0.25,
+    "medium": 0.0,
+    "hard": 0.15
+  },
+  "episodes": [
+    {
+      "episode_id": "f7747ee7-853c-4944-9cef-61a7e10d138d",
+      "task_type": "hard",
+      "reward": 0.15,
+      "feedback": "Triage score: 0.15. Critical interaction score: 0.00. Medication change score: 0.00. Explanation score: 0.00 from 0 keyword hits. Total: 0.15.",
+      "duration_s": 0.0015,
+      "model_response": "{\"metadata\": {\"source\": \"dummy\"}, \"severity\": \"none\", \"explanation\": \"Potential interaction could affect safety and should be reviewed.\", \"interactions\": [], \"triage\": \"normal\", \"revised_medications\": \"Consider stopping the most suspicious agent pending review.\"}",
+      "parsed_action": {
+        "metadata": {
+          "source": "dummy"
+        },
+        "severity": "none",
+        "explanation": "Potential interaction could affect safety and should be reviewed.",
+        "interactions": [],
+        "triage": "normal",
+        "revised_medications": "Consider stopping the most suspicious agent pending review."
+      }
+    },
+    {
+      "episode_id": "11db719f-4ab3-4f41-b6ec-9790af58ebd0",
+      "task_type": "easy",
+      "reward": 0.25,
+      "feedback": "Severity score: 0.25 (predicted=moderate, true=severe). Explanation score: 0.00 from 0 keyword hits. Total: 0.25.",
+      "duration_s": 0.0008,
+      "model_response": "{\"metadata\": {\"source\": \"dummy\"}, \"severity\": \"moderate\", \"explanation\": \"Potential interaction could affect safety and should be reviewed.\", \"interactions\": [], \"triage\": \"normal\", \"revised_medications\": \"Consider stopping the most suspicious agent pending review.\"}",
+      "parsed_action": {
+        "metadata": {
+          "source": "dummy"
+        },
+        "severity": "moderate",
+        "explanation": "Potential interaction could affect safety and should be reviewed.",
+        "interactions": [],
+        "triage": "normal",
+        "revised_medications": "Consider stopping the most suspicious agent pending review."
+      }
+    },
+    {
+      "episode_id": "1585fffe-fdc6-4e2f-b9a9-7f69b55c20dd",
+      "task_type": "medium",
+      "reward": 0.0,
+      "feedback": "Correctly identified pairs: ['none']. Missed pairs: ['sertraline + tramadol', 'ibuprofen + lithium']. False positives: ['depression + with']. Total: 0.00.",
+      "duration_s": 0.0007,
+      "model_response": "{\"metadata\": {\"source\": \"dummy\"}, \"severity\": \"mild\", \"explanation\": \"Potential interaction identified with conservative monitoring.\", \"interactions\": [{\"drug1\": \"with\", \"drug2\": \"depression\", \"severity\": \"mild\"}], \"triage\": \"caution\", \"revised_medications\": \"Review list and avoid the highest-risk combination.\"}",
+      "parsed_action": {
+        "metadata": {
+          "source": "dummy"
+        },
+        "severity": "mild",
+        "explanation": "Potential interaction identified with conservative monitoring.",
+        "interactions": [
+          {
+            "drug1": "with",
+            "drug2": "depression",
+            "severity": "mild"
+          }
+        ],
+        "triage": "caution",
+        "revised_medications": "Review list and avoid the highest-risk combination."
+      }
+    }
+  ]
+}

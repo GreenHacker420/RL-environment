@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 import hashlib
 import os
 import random
 import uuid
 
-from core.env_server import Environment
+from openenv.core.env_server import Environment
 
 from graders import grade_response
 from models import DrugAction, DrugObservation, DrugState
@@ -19,6 +18,8 @@ def _seed_from_episode_id(episode_id: str) -> int:
 
 
 class DrugInteractionEnv(Environment):
+    SUPPORTS_CONCURRENT_SESSIONS = True
+
     def __init__(self) -> None:
         self._task_loader = TaskLoader()
         initial_seed = int.from_bytes(os.urandom(8), byteorder="big", signed=False)
@@ -67,6 +68,8 @@ class DrugInteractionEnv(Environment):
         if self._task is None or self._episode_id is None:
             raise RuntimeError("Environment must be reset before step().")
         _ = timeout_s
+        if isinstance(action, dict):
+            action = DrugAction(**action)
 
         score, feedback = grade_response(self._task, action)
         self._step_count += 1
@@ -94,7 +97,7 @@ class DrugInteractionEnv(Environment):
                 "difficulty_score": self._task.difficulty_score,
                 "input_data": self._task.input_data,
                 "ground_truth": self._task.ground_truth,
-                "action": asdict(action),
+                "action": action.model_dump(),
             },
         )
 

@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import Any
 
-from core.http_env_client import HTTPEnvClient
-from core.types import StepResult
+from openenv.core.client_types import StepResult
+from openenv.core.env_client import EnvClient
 
 from models import DrugAction, DrugObservation, DrugState
 
 
-class DrugEnvClient(HTTPEnvClient[DrugAction, DrugObservation]):
+class DrugEnvClient(EnvClient[DrugAction, DrugObservation, DrugState]):
     def _step_payload(self, action: DrugAction) -> dict[str, Any]:
-        return asdict(action)
+        return action.model_dump()
 
     def _parse_result(self, payload: dict[str, Any]) -> StepResult:
         observation_payload = payload.get("observation", payload)

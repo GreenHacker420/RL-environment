@@ -7,7 +7,6 @@ import random
 import re
 import statistics
 import time
-from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import Any
 
@@ -24,6 +23,8 @@ except ImportError:
 
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 VALID_TRIAGE_LEVELS = ["normal", "caution", "emergency"]
+DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
+DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 def _safe_action() -> DrugAction:
@@ -117,6 +118,7 @@ def _call_model(
     prompt: str,
     task_type: str,
     model: str,
+    base_url: str | None,
     seed: int,
     episode_index: int,
     dummy_rng: random.Random,
@@ -124,14 +126,23 @@ def _call_model(
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key or OpenAI is None:
         action = _dummy_action(prompt, task_type, dummy_rng)
-        return json.dumps(asdict(action)), action
+        return json.dumps(action.model_dump()), action
 
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, base_url=base_url)
+    extra_headers: dict[str, str] = {}
+    referer = os.getenv("OPENROUTER_HTTP_REFERER")
+    title = os.getenv("OPENROUTER_X_TITLE")
+    if referer:
+        extra_headers["HTTP-Referer"] = referer
+    if title:
+        extra_headers["X-OpenRouter-Title"] = title
+
     response = client.chat.completions.create(
         model=model,
         temperature=0,
         seed=seed + episode_index,
         messages=_build_messages(prompt, task_type),
+        extra_headers=extra_headers or None,
     )
     content = response.choices[0].message.content or ""
     payload = _extract_json_object(content)
@@ -162,7 +173,13 @@ def _summary_table(results: dict[str, Any]) -> str:
     )
 
 
-async def run_benchmark(url: str, episodes: int, seed: int, model: str) -> dict[str, Any]:
+async def run_benchmark(
+    url: str,
+    episodes: int,
+    seed: int,
+    model: str,
+    base_url: str | None = None,
+) -> dict[str, Any]:
     random.seed(seed)
     np.random.seed(seed)
     dummy_rng = random.Random(seed)
@@ -177,6 +194,7 @@ async def run_benchmark(url: str, episodes: int, seed: int, model: str) -> dict[
                 prompt=observation.prompt,
                 task_type=observation.task_type,
                 model=model,
+                base_url=base_url,
                 seed=seed,
                 episode_index=episode_index,
                 dummy_rng=dummy_rng,
@@ -193,7 +211,7 @@ async def run_benchmark(url: str, episodes: int, seed: int, model: str) -> dict[
                     "feedback": step_result.observation.feedback,
                     "duration_s": round(duration_s, 4),
                     "model_response": raw_response,
-                    "parsed_action": asdict(action),
+                    "parsed_action": action.model_dump(),
                 }
             )
 
@@ -232,7 +250,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--url", default="http://localhost:8000")
     parser.add_argument("--episodes", type=int, default=60)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--model", default="gpt-4o-mini")
+    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument(
+        "--base-url",
+        default=os.getenv("OPENAI_BASE_URL") or DEFAULT_OPENROUTER_BASE_URL,
+    )
     return parser.parse_args()
 
 
@@ -240,4 +262,12 @@ if __name__ == "__main__":
     import asyncio
 
     args = parse_args()
-    asyncio.run(run_benchmark(args.url, args.episodes, args.seed, args.model))
+    asyncio.run(
+        run_benchmark(
+            args.url,
+            args.episodes,
+            args.seed,
+            args.model,
+            base_url=args.base_url,
+        )
+    )

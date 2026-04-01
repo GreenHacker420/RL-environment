@@ -1,5 +1,3 @@
-from dataclasses import asdict
-
 from models import DrugAction
 from server.environment import DrugInteractionEnv
 
@@ -22,8 +20,8 @@ def test_step_returns_done_true_and_float_reward() -> None:
 def test_state_property_is_pure() -> None:
     env = DrugInteractionEnv()
     env.reset()
-    first = asdict(env.state)
-    second = asdict(env.state)
+    first = env.state.model_dump()
+    second = env.state.model_dump()
     assert first == second
 
 
