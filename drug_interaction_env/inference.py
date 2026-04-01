@@ -19,6 +19,7 @@ from models import DrugAction, VALID_SEVERITY_LEVELS
 
 DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_MODEL_TIMEOUT_S = 120.0
 VALID_TRIAGE_LEVELS = ["normal", "caution", "emergency"]
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 
@@ -106,12 +107,14 @@ async def call_model(
     task_type: str,
     seed: int,
     episode_index: int,
+    timeout_s: float,
 ) -> tuple[str, DrugAction]:
     response = await client.chat.completions.create(
         model=model,
         temperature=0,
         seed=seed + episode_index,
         messages=build_messages(prompt, task_type),
+        timeout=timeout_s,
     )
     content = response.choices[0].message.content or ""
     payload = extract_json_object(content)
@@ -136,17 +139,26 @@ def print_summary(results: dict[str, Any]) -> None:
     print("\n".join(lines))
 
 
-async def run_benchmark(url: str, episodes: int, seed: int, model: str, base_url: str) -> dict[str, Any]:
+async def run_benchmark(
+    url: str,
+    episodes: int,
+    seed: int,
+    model: str,
+    base_url: str,
+    model_timeout_s: float,
+) -> dict[str, Any]:
     llm_client = create_openai_client(base_url)
     episode_records: list[dict[str, Any]] = []
 
     try:
         async with DrugEnvClient(base_url=url) as env:
             for episode_index in range(episodes):
+                print(f"[episode {episode_index + 1}/{episodes}] reset")
                 started_at = time.perf_counter()
                 reset_result = await env.reset()
                 observation = reset_result.observation
 
+                print(f"[episode {episode_index + 1}/{episodes}] model call ({observation.task_type})")
                 raw_response, action = await call_model(
                     client=llm_client,
                     model=model,
@@ -154,8 +166,10 @@ async def run_benchmark(url: str, episodes: int, seed: int, model: str, base_url
                     task_type=observation.task_type,
                     seed=seed,
                     episode_index=episode_index,
+                    timeout_s=model_timeout_s,
                 )
 
+                print(f"[episode {episode_index + 1}/{episodes}] step")
                 step_result = await env.step(action)
                 state = await env.state()
 
@@ -169,6 +183,10 @@ async def run_benchmark(url: str, episodes: int, seed: int, model: str, base_url
                         "model_response": raw_response,
                         "parsed_action": action.model_dump(),
                     }
+                )
+                print(
+                    f"[episode {episode_index + 1}/{episodes}] done "
+                    f"reward={step_result.reward:.3f} duration={episode_records[-1]['duration_s']:.2f}s"
                 )
     except ConnectionError as exc:
         raise RuntimeError(
@@ -215,6 +233,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--base-url", default=os.getenv("OPENAI_BASE_URL") or DEFAULT_BASE_URL)
+    parser.add_argument("--model-timeout-s", type=float, default=DEFAULT_MODEL_TIMEOUT_S)
     return parser.parse_args()
 
 
@@ -227,5 +246,6 @@ if __name__ == "__main__":
             seed=args.seed,
             model=args.model,
             base_url=args.base_url,
+            model_timeout_s=args.model_timeout_s,
         )
     )
