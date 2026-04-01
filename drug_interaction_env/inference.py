@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
 from client import DrugEnvClient
@@ -42,13 +42,17 @@ def extract_json_object(text: str) -> dict[str, Any]:
 def parse_action(payload: dict[str, Any]) -> DrugAction:
     severity = str(payload.get("severity", "moderate")).lower()
     triage = str(payload.get("triage", "caution")).lower()
+    raw_interactions = payload.get("interactions", [])
+    interactions = [
+        item
+        for item in raw_interactions
+        if isinstance(item, dict)
+    ] if isinstance(raw_interactions, list) else []
 
     return DrugAction(
         severity=severity if severity in VALID_SEVERITY_LEVELS else "moderate",
         explanation=str(payload.get("explanation", "")),
-        interactions=payload.get("interactions", [])
-        if isinstance(payload.get("interactions", []), list)
-        else [],
+        interactions=interactions,
         triage=triage if triage in VALID_TRIAGE_LEVELS else "caution",
         revised_medications=str(payload.get("revised_medications", "")),
         metadata=payload.get("metadata", {})
@@ -67,14 +71,17 @@ def build_messages(prompt: str, task_type: str) -> list[dict[str, str]]:
                 "interactions, triage, revised_medications, metadata. "
                 f"Task type: {task_type}. "
                 f"Valid severities: {VALID_SEVERITY_LEVELS}. "
-                f"Valid triage: {VALID_TRIAGE_LEVELS}."
+                f"Valid triage: {VALID_TRIAGE_LEVELS}. "
+                "interactions must be a JSON array of objects like "
+                "[{\"drug1\":\"warfarin\",\"drug2\":\"aspirin\",\"severity\":\"severe\"}]. "
+                "Do not return strings inside interactions."
             ),
         },
         {"role": "user", "content": prompt},
     ]
 
 
-def create_openai_client(base_url: str) -> OpenAI:
+def create_openai_client(base_url: str) -> AsyncOpenAI:
     api_key = require_env("OPENAI_API_KEY")
     headers: dict[str, str] = {}
 
@@ -85,22 +92,22 @@ def create_openai_client(base_url: str) -> OpenAI:
     if title:
         headers["X-OpenRouter-Title"] = title
 
-    return OpenAI(
+    return AsyncOpenAI(
         api_key=api_key,
         base_url=base_url,
         default_headers=headers or None,
     )
 
 
-def call_model(
-    client: OpenAI,
+async def call_model(
+    client: AsyncOpenAI,
     model: str,
     prompt: str,
     task_type: str,
     seed: int,
     episode_index: int,
 ) -> tuple[str, DrugAction]:
-    response = client.chat.completions.create(
+    response = await client.chat.completions.create(
         model=model,
         temperature=0,
         seed=seed + episode_index,
@@ -140,7 +147,7 @@ async def run_benchmark(url: str, episodes: int, seed: int, model: str, base_url
                 reset_result = await env.reset()
                 observation = reset_result.observation
 
-                raw_response, action = call_model(
+                raw_response, action = await call_model(
                     client=llm_client,
                     model=model,
                     prompt=observation.prompt,
