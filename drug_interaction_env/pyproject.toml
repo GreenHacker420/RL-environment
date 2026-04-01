@@ -26,12 +26,15 @@ server = [
 dev = [
   "pytest>=8.0.0",
 ]
+data = [
+  "kagglehub[pandas-datasets]",
+]
 
 [tool.setuptools]
 py-modules = ["models", "tasks", "graders", "client", "inference"]
 
 [tool.setuptools.packages.find]
-include = ["server"]
+include = ["server", "scripts"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

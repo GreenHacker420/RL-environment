@@ -1,0 +1,17 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.6.0
+openenv-core
+httpx>=0.27.0
+openai>=1.30.0
+python-dotenv>=1.0.1
+
+[data]
+kagglehub[pandas-datasets]
+
+[dev]
+pytest>=8.0.0
+
+[server]
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
