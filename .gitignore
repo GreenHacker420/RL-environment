@@ -4,3 +4,5 @@ __pycache__/
 
 .vscode/
 .env
+drug_interaction_env/ui/node_modules/
+drug_interaction_env/ui/.next/

@@ -41,6 +41,43 @@ Run a benchmark:
 python inference.py --url http://localhost:8000 --episodes 5 --seed 42
 ```
 
+Run the dashboard:
+
+```bash
+cd ui
+npm install
+npm run dev
+```
+
+The UI defaults to proxying the environment at `http://127.0.0.1:8000`. Override that with `OPENENV_API_BASE` if your backend is on another host or port.
+
+## Local Run
+
+Backend terminal:
+
+```bash
+cd drug_interaction_env
+uvicorn server.app:app --host 0.0.0.0 --port 8000
+```
+
+Frontend terminal:
+
+```bash
+cd drug_interaction_env/ui
+npm install
+npm run dev
+```
+
+Then open `http://localhost:3000`.
+
+Optional UI environment file:
+
+```bash
+cat > ui/.env.local <<'EOF'
+OPENENV_API_BASE=http://127.0.0.1:8000
+EOF
+```
+
 ## Environment API
 
 The environment exposes the standard `reset()`, `step()`, and `state` interface.
@@ -110,6 +147,8 @@ Run:
 ```bash
 docker run --rm -p 7860:7860 drug-interaction-env
 ```
+
+The backend Docker image only serves the environment API. The Next.js dashboard is a separate local operator UI and is not bundled into the backend container.
 
 ## Benchmarking
 
