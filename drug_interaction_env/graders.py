@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 from models import DrugAction
 from tasks import TaskConfig, normalize_drug_name
 
@@ -174,10 +172,9 @@ def grade_hard_task(task: TaskConfig, action: DrugAction) -> tuple[float, str]:
 
 
 def grade_response(task: TaskConfig, action: DrugAction) -> tuple[float, str]:
-    graders: dict[str, Any] = {
+    graders = {
         "easy": grade_easy_task,
         "medium": grade_medium_task,
         "hard": grade_hard_task,
     }
-    grader = graders[task.task_type]
-    return grader(task, action)
+    return graders[task.task_type](task, action)

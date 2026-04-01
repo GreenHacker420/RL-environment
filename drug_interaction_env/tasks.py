@@ -290,15 +290,18 @@ def _easy_task(task_id: str, drug1: str, drug2: str, context: str) -> TaskConfig
 
 
 def _build_medium_ground_truth(pairs: list[tuple[str, str]]) -> list[dict[str, Any]]:
-    return [
-        {
-            "drug1": lookup_pair(drug1, drug2)["drug1"],
-            "drug2": lookup_pair(drug1, drug2)["drug2"],
-            "severity": lookup_pair(drug1, drug2)["severity"],
-            "mechanism": lookup_pair(drug1, drug2)["mechanism"],
-        }
-        for drug1, drug2 in pairs
-    ]
+    interactions: list[dict[str, Any]] = []
+    for drug1, drug2 in pairs:
+        pair = lookup_pair(drug1, drug2)
+        interactions.append(
+            {
+                "drug1": pair["drug1"],
+                "drug2": pair["drug2"],
+                "severity": pair["severity"],
+                "mechanism": pair["mechanism"],
+            }
+        )
+    return interactions
 
 
 EASY_TASKS: list[TaskConfig] = [

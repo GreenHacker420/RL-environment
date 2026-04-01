@@ -68,8 +68,6 @@ class DrugInteractionEnv(Environment):
         if self._task is None or self._episode_id is None:
             raise RuntimeError("Environment must be reset before step().")
         _ = timeout_s
-        if isinstance(action, dict):
-            action = DrugAction(**action)
 
         score, feedback = grade_response(self._task, action)
         self._step_count += 1

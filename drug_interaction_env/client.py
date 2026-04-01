@@ -23,16 +23,3 @@ class DrugEnvClient(EnvClient[DrugAction, DrugObservation, DrugState]):
 
     def _parse_state(self, payload: dict[str, Any]) -> DrugState:
         return DrugState(**payload)
-
-
-if __name__ == "__main__":
-    with DrugEnvClient(base_url="http://localhost:8000").sync() as client:
-        reset_result = client.reset()
-        print(reset_result.observation.prompt)
-        action = DrugAction(
-            severity="moderate",
-            explanation="Possible clinically important interaction requiring monitoring.",
-        )
-        step_result = client.step(action)
-        print(step_result.reward)
-        print(step_result.observation.feedback)

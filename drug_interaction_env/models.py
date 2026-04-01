@@ -17,9 +17,6 @@ class DrugAction(Action):
     revised_medications: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
-        return self.model_dump()
-
 
 class DrugObservation(Observation):
     prompt: str = ""
@@ -32,14 +29,8 @@ class DrugObservation(Observation):
     )
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
-        return self.model_dump()
-
 
 class DrugState(State):
     task_type: str = ""
     current_score: float = 0.0
     safety_violations: int = 0
-
-    def to_dict(self) -> dict[str, Any]:
-        return self.model_dump()

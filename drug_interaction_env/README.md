@@ -6,9 +6,9 @@ app_port: 7860
 
 # Drug Interaction Env
 
-Drug Interaction Env is an OpenEnv-style FastAPI microservice for benchmarking and training LLM agents on clinically realistic drug-drug interaction reasoning. It is self-contained at runtime, uses typed action/observation/state models, and returns dense rewards that reflect clinical correctness, explanation quality, and safety.
+Drug Interaction Env is an OpenEnv microservice for benchmarking and training LLM agents on clinically realistic drug-drug interaction reasoning. It is self-contained at runtime, uses typed action/observation/state models, and returns dense rewards that reflect clinical correctness, explanation quality, and safety.
 
-The environment includes three task tiers: single-pair severity classification, multi-drug medication review, and full patient triage. It can be benchmarked with `inference.py` using an OpenAI-compatible API endpoint or a deterministic dummy agent when no API key is set.
+The environment includes three task tiers: single-pair severity classification, multi-drug medication review, and full patient triage. `inference.py` runs real evaluations only: it expects a live environment server and a real OpenAI-compatible model endpoint.
 
 This repo now targets the installed OpenEnv runtime directly via `openenv.core.*` imports rather than a local compatibility shim.
 
@@ -35,7 +35,7 @@ Run tests:
 pytest
 ```
 
-Run a smoke benchmark with the deterministic dummy agent:
+Run a benchmark:
 
 ```bash
 python inference.py --url http://localhost:8000 --episodes 5 --seed 42
@@ -123,7 +123,7 @@ This writes `results.json` and prints a summary table with mean score, spread, a
 
 ### Free Model Options
 
-This repo now defaults to the OpenRouter free model you selected:
+This repo defaults to the OpenRouter free model you selected:
 
 - `nvidia/nemotron-3-super-120b-a12b:free`
 
@@ -152,7 +152,7 @@ python inference.py \
   --model nvidia/nemotron-3-super-120b-a12b:free
 ```
 
-If you do not set `OPENAI_API_KEY`, `inference.py` falls back to the deterministic dummy agent, which is useful for reproducible smoke tests and CI.
+`OPENAI_API_KEY` is required. There is no local fallback agent in `inference.py`.
 
 ## Verification Performed In This Workspace
 
@@ -162,7 +162,7 @@ The following were run locally in this checkout:
 - `pytest`
 - `python inference.py --url http://127.0.0.1:8000 --episodes 3 --seed 42`
 
-The benchmark smoke test above ran without `OPENAI_API_KEY`, so it used the deterministic dummy agent. That path is now verified end to end and produced a `results.json` file in the project root.
+The benchmark command writes `results.json` in the project root.
 
 `docker build` was not fully verified in this session because the local Docker CLI could not reach a running daemon. The Dockerfile and local Uvicorn deployment path are in place.
 
