@@ -3,26 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-try:
-    from openenv_core import Action, Observation, State
-except ImportError:
-    try:
-        from core import Action, Observation, State  # type: ignore[attr-defined]
-    except ImportError:
-        @dataclass
-        class Action:
-            def to_dict(self) -> dict[str, Any]:
-                return asdict(self)
-
-        @dataclass
-        class Observation:
-            def to_dict(self) -> dict[str, Any]:
-                return asdict(self)
-
-        @dataclass
-        class State:
-            def to_dict(self) -> dict[str, Any]:
-                return asdict(self)
+from core.env_server import Action, Observation, State
 
 
 VALID_SEVERITY_LEVELS = ["none", "mild", "moderate", "severe"]
