@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from openai import OpenAI
+from dotenv import load_dotenv
 
 from client import DrugEnvClient
 from models import DrugAction, VALID_SEVERITY_LEVELS
@@ -20,6 +21,8 @@ DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 VALID_TRIAGE_LEVELS = ["normal", "caution", "emergency"]
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
+
+load_dotenv()
 
 
 def require_env(name: str) -> str:

@@ -132,14 +132,14 @@ Use it only for trial evaluation. OpenRouter marks free endpoints as logged, non
 Example:
 
 ```bash
-export OPENAI_API_KEY=your_openrouter_key
-export OPENAI_BASE_URL=https://openrouter.ai/api/v1
-export OPENROUTER_HTTP_REFERER=https://your-site.example
-export OPENROUTER_X_TITLE=Drug-Interaction-Env
-python inference.py \
-  --url http://localhost:8000 \
-  --episodes 20 \
-  --seed 42
+cat > .env <<'EOF'
+OPENAI_API_KEY=your_openrouter_key
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_HTTP_REFERER=https://your-site.example
+OPENROUTER_X_TITLE=Drug-Interaction-Env
+EOF
+
+python inference.py --url http://localhost:8000 --episodes 20 --seed 42
 ```
 
 If you want to override the default model explicitly:
