@@ -49,7 +49,10 @@ npm install
 npm run dev
 ```
 
-The UI defaults to proxying the environment at `http://127.0.0.1:8000`. Override that with `OPENENV_API_BASE` if your backend is on another host or port.
+The UI reads environment metadata over HTTP and drives episode state over the real OpenEnv WebSocket session. By default it expects:
+
+- `OPENENV_API_BASE=http://127.0.0.1:8000`
+- `NEXT_PUBLIC_OPENENV_WS_URL=ws://127.0.0.1:8000/ws`
 
 ## Local Run
 
@@ -75,6 +78,7 @@ Optional UI environment file:
 ```bash
 cat > ui/.env.local <<'EOF'
 OPENENV_API_BASE=http://127.0.0.1:8000
+NEXT_PUBLIC_OPENENV_WS_URL=ws://127.0.0.1:8000/ws
 EOF
 ```
 
@@ -148,7 +152,7 @@ Run:
 docker run --rm -p 7860:7860 drug-interaction-env
 ```
 
-The backend Docker image only serves the environment API. The Next.js dashboard is a separate local operator UI and is not bundled into the backend container.
+The backend Docker image only serves the environment API. The Next.js dashboard is a separate operator UI and is not bundled into the backend container.
 
 ## Benchmarking
 

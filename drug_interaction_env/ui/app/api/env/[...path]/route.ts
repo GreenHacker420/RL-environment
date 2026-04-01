@@ -37,10 +37,3 @@ export async function GET(
 ) {
   return proxy(request, context.params);
 }
-
-export async function POST(
-  request: Request,
-  context: { params: Promise<Params> },
-) {
-  return proxy(request, context.params);
-}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type HealthResponse = { status: string };
 
@@ -86,8 +86,15 @@ type LogEntry = {
   detail: string;
 };
 
+type WsResponse<T> = {
+  type: string;
+  data: T;
+};
+
 const severityOptions = ["none", "mild", "moderate", "severe"];
 const triageOptions = ["normal", "caution", "emergency"];
+const WS_URL =
+  process.env.NEXT_PUBLIC_OPENENV_WS_URL ?? "ws://127.0.0.1:8000/ws";
 
 const initialAction = (): ActionDraft => ({
   severity: "moderate",
@@ -134,6 +141,12 @@ function statusTone(status: string | undefined) {
 }
 
 export default function Page() {
+  const wsRef = useRef<WebSocket | null>(null);
+  const wsConnectingRef = useRef<Promise<WebSocket> | null>(null);
+  const pendingMessageRef = useRef<{
+    resolve: (value: WsResponse<unknown>) => void;
+    reject: (reason?: unknown) => void;
+  } | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [metadata, setMetadata] = useState<MetadataResponse | null>(null);
   const [state, setState] = useState<StateResponse | null>(null);
@@ -144,6 +157,7 @@ export default function Page() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [socketReady, setSocketReady] = useState(false);
 
   const currentScore = state?.current_score ?? currentObservation?.partial_score;
   const latestFeedback = currentObservation?.feedback || lastResult?.observation.feedback;
@@ -156,7 +170,93 @@ export default function Page() {
 
   useEffect(() => {
     void refreshDashboard();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
   }, []);
+
+  async function connectWs(): Promise<WebSocket> {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      setSocketReady(true);
+      return wsRef.current;
+    }
+
+    if (wsConnectingRef.current) {
+      return wsConnectingRef.current;
+    }
+
+    wsConnectingRef.current = new Promise<WebSocket>((resolve, reject) => {
+      const socket = new WebSocket(WS_URL);
+
+      socket.onopen = () => {
+        wsRef.current = socket;
+        wsConnectingRef.current = null;
+        setSocketReady(true);
+        resolve(socket);
+      };
+
+      socket.onmessage = (event) => {
+        const pending = pendingMessageRef.current;
+        if (!pending) {
+          return;
+        }
+
+        pendingMessageRef.current = null;
+        const message = JSON.parse(event.data) as WsResponse<unknown>;
+        if (message.type === "error") {
+          pending.reject(
+            new Error(JSON.stringify(message.data) || "WebSocket request failed"),
+          );
+          return;
+        }
+
+        pending.resolve(message);
+      };
+
+      socket.onerror = () => {
+        setSocketReady(false);
+      };
+
+      socket.onclose = () => {
+        setSocketReady(false);
+        wsRef.current = null;
+        wsConnectingRef.current = null;
+        if (pendingMessageRef.current) {
+          pendingMessageRef.current.reject(new Error("WebSocket connection closed."));
+          pendingMessageRef.current = null;
+        }
+      };
+
+      socket.addEventListener("error", () => {
+        wsConnectingRef.current = null;
+        reject(new Error(`Failed to connect to ${WS_URL}`));
+      });
+    });
+
+    return wsConnectingRef.current;
+  }
+
+  async function sendWs<T>(message: { type: string; data?: unknown }): Promise<WsResponse<T>> {
+    const socket = await connectWs();
+
+    if (pendingMessageRef.current) {
+      throw new Error("A WebSocket request is already in flight.");
+    }
+
+    const responsePromise = new Promise<WsResponse<T>>((resolve, reject) => {
+      pendingMessageRef.current = {
+        resolve: (value) => resolve(value as WsResponse<T>),
+        reject,
+      };
+    });
+
+    socket.send(JSON.stringify(message));
+    return responsePromise;
+  }
 
   async function refreshDashboard() {
     setError(null);
@@ -164,7 +264,7 @@ export default function Page() {
       const [healthPayload, metadataPayload, statePayload] = await Promise.all([
         getJson<HealthResponse>("/api/env/health"),
         getJson<MetadataResponse>("/api/env/metadata"),
-        getJson<StateResponse>("/api/env/state"),
+        sendWs<StateResponse>({ type: "state" }).then((response) => response.data),
       ]);
 
       setHealth(healthPayload);
@@ -197,17 +297,13 @@ export default function Page() {
     setBusy(true);
     setError(null);
     try {
-      const payload = await getJson<ResetResponse>("/api/env/reset", {
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-
-      setCurrentObservation(payload.observation);
+      const resetEnvelope = await sendWs<ResetResponse>({ type: "reset", data: {} });
+      setCurrentObservation(resetEnvelope.data.observation);
       setLastResult(null);
       setAction(initialAction());
       appendLog(
         "Episode reset",
-        `${payload.observation.task_type ?? "unknown"} task loaded: ${payload.observation.task_id ?? "no-id"}`,
+        `${resetEnvelope.data.observation.task_type ?? "unknown"} task loaded: ${resetEnvelope.data.observation.task_id ?? "no-id"}`,
       );
       await refreshDashboard();
     } catch (resetError) {
@@ -221,16 +317,16 @@ export default function Page() {
     setBusy(true);
     setError(null);
     try {
-      const payload = await getJson<StepResponse>("/api/env/step", {
-        method: "POST",
-        body: JSON.stringify({ action }),
+      const payload = await sendWs<StepResponse>({
+        type: "step",
+        data: action,
       });
 
-      setLastResult(payload);
-      setCurrentObservation(payload.observation);
+      setLastResult(payload.data);
+      setCurrentObservation(payload.data.observation);
       appendLog(
         "Action submitted",
-        `reward=${payload.reward ?? 0} done=${payload.done} severity=${action.severity} triage=${action.triage}`,
+        `reward=${payload.data.reward ?? 0} done=${payload.data.done} severity=${action.severity} triage=${action.triage}`,
       );
       await refreshDashboard();
     } catch (stepError) {
@@ -298,6 +394,12 @@ export default function Page() {
             <div className="keyValue">
               <span className="subtle">API proxy</span>
               <span className="mono">/api/env/*</span>
+            </div>
+            <div className="keyValue">
+              <span className="subtle">Session transport</span>
+              <span className={`pill ${socketReady ? "good" : "warn"}`}>
+                {socketReady ? "websocket connected" : "connects on demand"}
+              </span>
             </div>
             <div className="buttonRow">
               <button className="button" onClick={handleReset} disabled={busy}>
