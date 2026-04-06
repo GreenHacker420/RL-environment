@@ -1,0 +1,5 @@
+name: code_review_env
+version: "1.0.0"
+description: "Environment for LLM agents to identify and fix bugs in Python code"
+server_type: "fastapi"
+entrypoint: "server/app.py"
