@@ -18,4 +18,4 @@ USER appuser
 
 EXPOSE 7860
 
-CMD sh -c "uvicorn code_review_env.server.app:app --host 0.0.0.0 --port ${PORT:-7860}"
+CMD sh -c "uvicorn server.app:app --host 0.0.0.0 --port ${PORT:-7860}"
