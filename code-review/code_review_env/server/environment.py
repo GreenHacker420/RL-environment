@@ -10,14 +10,14 @@ from openenv.core.env_server.interfaces import Environment
 try:
     from ..graders import grade_easy, grade_hard, grade_medium
     from ..models import ReviewAction, ReviewObservation, ReviewState
-    from ..tasks import get_tasks_by_difficulty, render_prompt
+    from ..tasks import get_task_by_id, get_tasks_by_difficulty, render_prompt
 except ImportError:
     ROOT = Path(__file__).resolve().parents[1]
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
     from graders import grade_easy, grade_hard, grade_medium
     from models import ReviewAction, ReviewObservation, ReviewState
-    from tasks import get_tasks_by_difficulty, render_prompt
+    from tasks import get_task_by_id, get_tasks_by_difficulty, render_prompt
 
 
 class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
@@ -39,14 +39,19 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         seed: int | None = None,
         episode_id: str | None = None,
         difficulty: str = "easy",
+        task_id: str | None = None,
         **_: object,
     ) -> ReviewObservation:
-        candidates = get_tasks_by_difficulty(difficulty)
-        if not candidates:
-            raise ValueError(f"Unknown difficulty: {difficulty}")
+        if task_id is not None:
+            self._task = get_task_by_id(task_id)
+            difficulty = self._task["difficulty"]
+        else:
+            candidates = get_tasks_by_difficulty(difficulty)
+            if not candidates:
+                raise ValueError(f"Unknown difficulty: {difficulty}")
 
-        chooser = random.Random(seed) if seed is not None else random
-        self._task = chooser.choice(candidates)
+            chooser = random.Random(seed) if seed is not None else random
+            self._task = chooser.choice(candidates)
         self._done = False
         self._state = ReviewState(
             episode_id=episode_id or str(uuid4()),

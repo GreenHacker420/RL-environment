@@ -560,6 +560,13 @@ def get_tasks_by_difficulty(difficulty: str) -> list[dict[str, Any]]:
     return [task for task in TASKS if task["difficulty"] == normalized]
 
 
+def get_task_by_id(task_id: str) -> dict[str, Any]:
+    for task in TASKS:
+        if task["id"] == task_id:
+            return task
+    raise ValueError(f"Unknown task_id: {task_id}")
+
+
 def render_prompt(prompt: str | dict[str, str]) -> str:
     if isinstance(prompt, str):
         return prompt

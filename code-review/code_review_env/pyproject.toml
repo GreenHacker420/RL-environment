@@ -9,6 +9,7 @@ description = "LLM agent identifies and fixes bugs in Python code snippets"
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26.0",
+    "openai>=1.40.0",
     "openenv-core[core]>=0.2.3",
 ]
 
