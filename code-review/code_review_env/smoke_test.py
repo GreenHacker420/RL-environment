@@ -22,16 +22,25 @@ def main() -> None:
         print("RESET")
         print(json.dumps(reset_result.observation.model_dump(), indent=2))
 
-        action = ReviewAction(
-            bug_line=2,
-            bug_type="missing return",
-            description="missing return result output",
-            fixed_code="def square(n):\n    result = n * n\n    return result",
+        first_attempt = client.step(
+            ReviewAction(
+                fixed_code="def square(n):\n    result = n * n",
+                summary="Preserve the current code to confirm the test feedback.",
+            )
         )
-        step_result = client.step(action)
-        print("STEP")
-        print(json.dumps(step_result.observation.model_dump(), indent=2))
-        print("REWARD", step_result.reward)
+        print("STEP 1")
+        print(json.dumps(first_attempt.observation.model_dump(), indent=2))
+        print("REWARD", first_attempt.reward)
+
+        second_attempt = client.step(
+            ReviewAction(
+                fixed_code="def square(n):\n    result = n * n\n    return result",
+                summary="Return the computed result so the helper passes the tests.",
+            )
+        )
+        print("STEP 2")
+        print(json.dumps(second_attempt.observation.model_dump(), indent=2))
+        print("REWARD", second_attempt.reward)
 
         state = client.state()
         print("STATE")

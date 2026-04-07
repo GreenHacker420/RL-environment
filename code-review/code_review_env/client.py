@@ -18,10 +18,8 @@ class CodeReviewEnvClient(
 
     def _step_payload(self, action: ReviewAction) -> dict[str, Any]:
         return {
-            "bug_line": action.bug_line,
-            "bug_type": action.bug_type,
-            "description": action.description,
             "fixed_code": action.fixed_code,
+            "summary": action.summary,
             "metadata": action.metadata,
         }
 
@@ -34,6 +32,10 @@ class CodeReviewEnvClient(
             feedback=observation_data.get("feedback", ""),
             task_id=observation_data.get("task_id", ""),
             difficulty=observation_data.get("difficulty", ""),
+            attempt=int(observation_data.get("attempt", 0)),
+            max_attempts=int(observation_data.get("max_attempts", 0)),
+            tests_passed=int(observation_data.get("tests_passed", 0)),
+            tests_total=int(observation_data.get("tests_total", 0)),
             metadata=observation_data.get("metadata", {}),
         )
         return StepResult(
@@ -48,6 +50,11 @@ class CodeReviewEnvClient(
             step_count=int(payload.get("step_count", 0)),
             difficulty=payload.get("difficulty", "easy"),
             current_score=float(payload.get("current_score", 0.0) or 0.0),
+            best_score=float(payload.get("best_score", 0.0) or 0.0),
+            task_id=payload.get("task_id", ""),
+            max_attempts=int(payload.get("max_attempts", 0)),
+            tests_passed=int(payload.get("tests_passed", 0)),
+            tests_total=int(payload.get("tests_total", 0)),
         )
 
 

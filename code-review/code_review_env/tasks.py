@@ -417,8 +417,8 @@ TASKS: list[dict[str, Any]] = [
             ),
         },
         "test_cases": [
-            {"call": "divide(8, 2)", "expected": 4.0},
-            {"call": "divide(8, 0)", "expected": "ValueError"},
+            {"entry": "divide", "args": [8, 2], "expected": 4.0},
+            {"entry": "divide", "args": [8, 0], "expected_error": "ValueError"},
         ],
     },
     {
@@ -478,7 +478,7 @@ TASKS: list[dict[str, Any]] = [
             ),
         },
         "test_cases": [
-            {"call": "format_record('Ada,99')", "expected": "Ada (99)"},
+            {"entry": "format_record", "args": ["Ada,99"], "expected": "Ada (99)"},
         ],
     },
     {
@@ -547,12 +547,188 @@ TASKS: list[dict[str, Any]] = [
         },
         "test_cases": [
             {
-                "call": "create_session('admin', 'secret')",
+                "entry": "create_session",
+                "args": ["admin", "secret"],
                 "expected": {"user": "admin", "role": "admin", "active": True},
             },
         ],
     },
 ]
+
+
+_TASK_RUNTIME_CONFIG: dict[str, dict[str, Any]] = {
+    "easy_off_by_one": {
+        "title": "Fix last-item lookup in helper utility",
+        "description": "A reviewer flagged an indexing issue in a helper used by list-processing code.",
+        "developer_note": "A customer reported this crashes on non-empty lists.",
+        "task_kind": "function",
+        "entry_point": "last_item",
+        "hidden_tests": [
+            {"input": [[9]], "expected": 9},
+            {"input": [["a", "b"]], "expected": "b"},
+        ],
+    },
+    "easy_wrong_operator": {
+        "title": "Correct adulthood check",
+        "description": "A validation helper is classifying users incorrectly around the age threshold.",
+        "developer_note": "The behavior should match the product rule: adult means 18 or older.",
+        "task_kind": "function",
+        "entry_point": "is_adult",
+        "hidden_tests": [
+            {"input": [18], "expected": True},
+            {"input": [17], "expected": False},
+        ],
+    },
+    "easy_missing_return": {
+        "title": "Restore return value in math helper",
+        "description": "A PR accidentally removed the result return from a simple utility function.",
+        "developer_note": "The implementation computes the right value but callers receive the wrong thing.",
+        "task_kind": "function",
+        "entry_point": "square",
+        "hidden_tests": [
+            {"input": [0], "expected": 0},
+            {"input": [5], "expected": 25},
+        ],
+    },
+    "easy_wrong_variable_name": {
+        "title": "Fix counter return in collection helper",
+        "description": "A small refactor introduced an undefined name in an aggregation helper.",
+        "developer_note": "The loop logic is fine; the final return path is not.",
+        "task_kind": "function",
+        "entry_point": "count_odds",
+        "hidden_tests": [
+            {"input": [[1, 1, 1]], "expected": 3},
+            {"input": [[0, 2, 8]], "expected": 0},
+        ],
+    },
+    "easy_missing_zero_guard": {
+        "title": "Handle zero divisors safely",
+        "description": "A ratio helper should avoid crashing when the denominator is zero.",
+        "developer_note": "Returning zero for zero-count inputs is acceptable for this code path.",
+        "task_kind": "function",
+        "entry_point": "safe_ratio",
+        "hidden_tests": [
+            {"input": [0, 0], "expected": 0},
+            {"input": [9, 3], "expected": 3.0},
+        ],
+    },
+    "medium_stack": {
+        "title": "Repair stack behavior after container refactor",
+        "description": "A stack class regressed after a list-handling cleanup. LIFO semantics must be restored.",
+        "developer_note": "Operations should behave like a normal stack, including empty-stack checks.",
+        "task_kind": "class",
+        "entry_point": "Stack",
+        "hidden_tests": [
+            {"steps": [["push", 1], ["push", 2], ["push", 3], ["pop"]], "expected": 3},
+            {"steps": [["push", "x"], ["peek"]], "expected": "x"},
+        ],
+    },
+    "medium_bank_account": {
+        "title": "Fix account balance updates",
+        "description": "A banking PR introduced regressions in deposit and withdrawal logic.",
+        "developer_note": "Negative deposits should be ignored, and withdrawals should subtract funds.",
+        "task_kind": "class",
+        "entry_point": "BankAccount",
+        "hidden_tests": [
+            {"steps": [["deposit", -5]], "start": 10, "expected": 10},
+            {"steps": [["withdraw", 20]], "start": 10, "expected": 10},
+        ],
+    },
+    "medium_linked_list": {
+        "title": "Repair append and find in linked list utility",
+        "description": "A linked-list helper no longer attaches the first node correctly and reports matches incorrectly.",
+        "developer_note": "The caller expects append to mutate the list and find to return the matching node.",
+        "task_kind": "class",
+        "entry_point": "LinkedList",
+        "hidden_tests": [
+            {"values": [1], "find": 1, "expected": {"value": 1, "next": None}},
+            {"values": [4, 6, 8], "find": 9, "expected": None},
+        ],
+    },
+    "medium_file_processor": {
+        "title": "Fix file processor edge cases",
+        "description": "A small utility class returns the wrong answers for empty text and file extensions.",
+        "developer_note": "Empty text should count as zero lines, and extensions come from the last suffix.",
+        "task_kind": "class",
+        "entry_point": "FileProcessor",
+        "hidden_tests": [
+            {"method": "count_lines", "input": "a\nb\nc", "expected": 3},
+            {"method": "file_extension", "input": "archive.tar.gz", "expected": "gz"},
+        ],
+    },
+    "hard_calculator_validator": {
+        "title": "Fix PR across calculator and validator modules",
+        "description": "A multi-file change broke numeric validation and division semantics.",
+        "developer_note": "The modules are meant to work together; one bug is in the integration path.",
+        "task_kind": "module",
+        "entry_module": "calculator",
+        "entry_point": "divide",
+        "hidden_tests": [
+            {"entry": "divide", "args": [9, 3], "expected": 3.0},
+            {"entry": "divide", "args": ["9", 3], "expected_error": "TypeError"},
+        ],
+    },
+    "hard_parser_formatter": {
+        "title": "Repair parser and formatter integration",
+        "description": "A formatting workflow broke after renaming parser helpers and record fields.",
+        "developer_note": "One failure is a wrong import, another is a schema mismatch.",
+        "task_kind": "module",
+        "entry_module": "formatter",
+        "entry_point": "format_record",
+        "hidden_tests": [
+            {"entry": "format_record", "args": ["Grace,100"], "expected": "Grace (100)"},
+            {"entry": "format_record", "args": ["Linus,0"], "expected": "Linus (0)"},
+        ],
+    },
+    "hard_auth_session": {
+        "title": "Repair authentication and session creation flow",
+        "description": "A session-management PR introduced auth regressions and one cross-module naming bug.",
+        "developer_note": "Valid credentials should produce an active session with the right role.",
+        "task_kind": "module",
+        "entry_module": "session",
+        "entry_point": "create_session",
+        "hidden_tests": [
+            {
+                "entry": "create_session",
+                "args": ["guest", "guest"],
+                "expected": {"user": "guest", "role": "viewer", "active": True},
+            },
+            {"entry": "create_session", "args": ["admin", "wrong"], "expected": None},
+        ],
+    },
+}
+
+
+_MAX_ATTEMPTS = {
+    "easy": 3,
+    "medium": 4,
+    "hard": 4,
+}
+
+
+def _describe_test_case(task: dict[str, Any], case: dict[str, Any]) -> str:
+    kind = task["task_kind"]
+    if kind == "function":
+        return f"{task['entry_point']}{tuple(case['input'])!r} -> {case['expected']!r}"
+    if kind == "class":
+        if "steps" in case:
+            start = case.get("start", 0)
+            return f"{task['entry_point']} with start={start!r}, steps={case['steps']!r} -> {case['expected']!r}"
+        return f"{task['entry_point']} linked-list workflow -> {case['expected']!r}"
+    args = tuple(case.get("args", []))
+    if "expected_error" in case:
+        return f"{task['entry_point']}{args!r} raises {case['expected_error']}"
+    return f"{task['entry_point']}{args!r} -> {case['expected']!r}"
+
+
+for task in TASKS:
+    runtime = _TASK_RUNTIME_CONFIG[task["id"]]
+    task.update(runtime)
+    task["public_tests"] = list(task["test_cases"])
+    task["public_test_descriptions"] = [
+        _describe_test_case(task, case) for case in task["public_tests"]
+    ]
+    task["max_attempts"] = _MAX_ATTEMPTS[task["difficulty"]]
 
 
 def get_tasks_by_difficulty(difficulty: str) -> list[dict[str, Any]]:
@@ -582,3 +758,21 @@ def find_task_by_rendered_prompt(prompt: str) -> dict[str, Any]:
         if render_prompt(task["prompt"]) == prompt:
             return task
     raise ValueError("Unknown prompt.")
+
+
+def build_observation_prompt(task: dict[str, Any], current_code: str | dict[str, str]) -> str:
+    code_block = render_prompt(current_code)
+    public_tests = "\n".join(
+        f"- {description}" for description in task["public_test_descriptions"]
+    )
+    note = task.get("developer_note", "")
+    return (
+        f"PR Title: {task['title']}\n"
+        f"Difficulty: {task['difficulty']}\n"
+        f"PR Description: {task['description']}\n"
+        f"Reviewer Note: {note}\n\n"
+        "Submit a revised implementation that fixes the buggy code. "
+        "Your score is driven mainly by public test progress, syntax validity, and improvement over prior attempts.\n\n"
+        f"Public tests:\n{public_tests}\n\n"
+        f"Current code:\n{code_block}"
+    )

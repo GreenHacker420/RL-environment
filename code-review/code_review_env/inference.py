@@ -28,7 +28,7 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 BENCHMARK = "code_review_env"
 TEMPERATURE = 0
-MAX_TOKENS = 1600
+MAX_TOKENS = 2200
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
@@ -63,22 +63,19 @@ def require_api_key() -> str:
 
 def build_system_prompt() -> str:
     return (
-        "You are solving a code review task. "
-        "Return only valid JSON with keys: bug_line, bug_type, description, fixed_code. "
-        "For easy tasks use an integer bug_line and a string bug_type. "
-        "For medium tasks use bug_line as a list of objects with line, bug_type, description. "
-        "For hard tasks use bug_line as a list of objects with file, line, bug_type, description, "
-        "and fixed_code as a JSON object mapping filenames to corrected code strings."
+        "You are debugging a pull request in an iterative code-review environment. "
+        "Return only valid JSON with keys: fixed_code and summary. "
+        "fixed_code must be a full code string for single-file tasks or a JSON object "
+        "mapping filenames to updated code strings for multi-file tasks."
     )
 
 
-def build_user_prompt(task: dict[str, Any], prompt: str) -> str:
+def build_user_prompt(prompt: str, feedback: str, attempt: int, max_attempts: int) -> str:
     return (
-        f"Task ID: {task['id']}\n"
-        f"Difficulty: {task['difficulty']}\n"
-        "Review the buggy Python code below, identify the bug locations, classify the bug type, "
-        "and provide corrected code.\n\n"
-        f"{prompt}"
+        f"Attempt: {attempt}/{max_attempts}\n"
+        f"Feedback from previous submission: {feedback}\n\n"
+        f"{prompt}\n\n"
+        "Return only JSON."
     )
 
 
@@ -90,19 +87,20 @@ def extract_json(text: str) -> dict[str, Any]:
 
 
 def normalize_action(payload: dict[str, Any]) -> ReviewAction:
-    bug_line = payload.get("bug_line", -1)
-    bug_type = payload.get("bug_type", "")
-    description = str(payload.get("description", ""))
-    fixed_code = payload.get("fixed_code", "")
     return ReviewAction(
-        bug_line=bug_line,
-        bug_type=bug_type,
-        description=description,
-        fixed_code=fixed_code,
+        fixed_code=payload.get("fixed_code", ""),
+        summary=str(payload.get("summary", "")),
     )
 
 
-def get_model_action(client: OpenAI, task: dict[str, Any], prompt: str, seed: int) -> tuple[str, ReviewAction]:
+def get_model_action(
+    client: OpenAI,
+    prompt: str,
+    feedback: str,
+    attempt: int,
+    max_attempts: int,
+    seed: int,
+) -> tuple[str, ReviewAction]:
     response = client.chat.completions.create(
         model=MODEL_NAME,
         temperature=TEMPERATURE,
@@ -110,7 +108,15 @@ def get_model_action(client: OpenAI, task: dict[str, Any], prompt: str, seed: in
         seed=seed,
         messages=[
             {"role": "system", "content": build_system_prompt()},
-            {"role": "user", "content": build_user_prompt(task, prompt)},
+            {
+                "role": "user",
+                "content": build_user_prompt(
+                    prompt=prompt,
+                    feedback=feedback,
+                    attempt=attempt,
+                    max_attempts=max_attempts,
+                ),
+            },
         ],
     )
     content = (response.choices[0].message.content or "").strip()
@@ -120,9 +126,8 @@ def get_model_action(client: OpenAI, task: dict[str, Any], prompt: str, seed: in
 
 def sanitize_action_for_log(action: ReviewAction) -> str:
     payload = {
-        "bug_line": action.bug_line,
-        "bug_type": action.bug_type,
-        "description": action.description,
+        "summary": action.summary,
+        "fixed_code_type": "dict" if isinstance(action.fixed_code, dict) else "str",
     }
     return json.dumps(payload, separators=(",", ":"), ensure_ascii=True)
 
@@ -142,11 +147,7 @@ def per_difficulty_breakdown(records: list[dict[str, Any]]) -> dict[str, dict[st
 def task_schedule(episodes: int) -> list[dict[str, Any]]:
     if episodes <= len(TASKS):
         return TASKS[:episodes]
-
-    scheduled: list[dict[str, Any]] = []
-    for index in range(episodes):
-        scheduled.append(TASKS[index % len(TASKS)])
-    return scheduled
+    return [TASKS[index % len(TASKS)] for index in range(episodes)]
 
 
 def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
@@ -164,8 +165,9 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
             score = 0.0
             success = False
             error_message: str | None = None
-            raw_model_response = ""
-            action_log = "null"
+            model_outputs: list[str] = []
+            action_logs: list[str] = []
+            last_feedback = ""
 
             log_start(task=task["id"], env=BENCHMARK, model=MODEL_NAME)
             try:
@@ -173,35 +175,48 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                     difficulty=task["difficulty"],
                     task_id=task["id"],
                 )
-                prompt = reset_result.observation.prompt
+                observation = reset_result.observation
 
-                raw_model_response, action = get_model_action(
-                    client=model_client,
-                    task=task,
-                    prompt=prompt,
-                    seed=seed + episode_index,
-                )
-                action_log = sanitize_action_for_log(action)
+                while True:
+                    attempt_number = observation.attempt + 1
+                    raw_model_response, action = get_model_action(
+                        client=model_client,
+                        prompt=observation.prompt,
+                        feedback=observation.feedback,
+                        attempt=attempt_number,
+                        max_attempts=observation.max_attempts,
+                        seed=seed + episode_index + steps_taken,
+                    )
+                    model_outputs.append(raw_model_response)
+                    action_log = sanitize_action_for_log(action)
+                    action_logs.append(action_log)
 
-                step_result = env_client.step(action)
-                reward = float(step_result.reward or 0.0)
-                rewards.append(reward)
-                steps_taken = 1
-                score = max(0.0, min(1.0, reward))
-                success = score > 0.0
+                    step_result = env_client.step(action)
+                    observation = step_result.observation
+                    reward = float(step_result.reward or 0.0)
+                    rewards.append(reward)
+                    steps_taken += 1
+                    last_feedback = observation.feedback
 
-                log_step(
-                    step=1,
-                    action=action_log,
-                    reward=reward,
-                    done=step_result.done,
-                    error=None,
-                )
+                    log_step(
+                        step=steps_taken,
+                        action=action_log,
+                        reward=reward,
+                        done=step_result.done,
+                        error=None,
+                    )
+
+                    if step_result.done:
+                        break
+
+                state = env_client.state()
+                score = float(state.best_score)
+                success = "Solved." in last_feedback
             except Exception as exc:
                 error_message = str(exc).replace("\n", " ").strip()
                 log_step(
-                    step=1,
-                    action=action_log,
+                    step=max(1, steps_taken + 1),
+                    action=action_logs[-1] if action_logs else "null",
                     reward=0.0,
                     done=True,
                     error=error_message,
@@ -219,7 +234,9 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                     "steps": steps_taken,
                     "rewards": rewards,
                     "error": error_message,
-                    "model_response": raw_model_response,
+                    "model_responses": model_outputs,
+                    "actions": action_logs,
+                    "final_feedback": last_feedback,
                 }
             )
 

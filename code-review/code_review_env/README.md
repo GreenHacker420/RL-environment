@@ -13,237 +13,207 @@ tags:
 
 # CodeReviewEnv
 
-CodeReviewEnv is a small OpenEnv benchmark where an agent reviews buggy Python code,
-identifies bug locations, classifies bug types, and submits corrected code.
+CodeReviewEnv is an OpenEnv benchmark for iterative code review and debugging.
+An agent receives a buggy pull request, submits revised code, gets test feedback,
+and refines the solution over multiple attempts.
 
-This project includes the default OpenEnv web UI. When the web interface is enabled,
-the server exposes:
+This is not a one-shot answer matcher. The environment scores code primarily by
+running deterministic tests against the submitted implementation.
 
-- Web UI at `http://localhost:7860/web/`
-- Root redirect from `http://localhost:7860/` to `/web/`
-- Swagger UI at `http://localhost:7860/docs`
-- ReDoc at `http://localhost:7860/redoc`
-- OpenAPI schema at `http://localhost:7860/openapi.json`
+## Why this environment
 
-The `/web/` UI is the built-in OpenEnv Gradio interface. It is not a custom app
-for this benchmark, but it does let you inspect tasks and interact with the
-environment in the browser.
+Real software engineering is iterative:
 
-The task set is fully hardcoded in `tasks.py`:
+- inspect buggy code
+- make a change
+- run tests
+- inspect failures
+- refine the fix
 
-- 5 easy tasks with one bug each
-- 4 medium tasks with one class and two bugs each
-- 3 hard tasks with two modules and three bugs each
+CodeReviewEnv models that loop directly. It is closer to real debugging than a
+single-step classification task and provides shaped reward over a trajectory.
+
+## Task design
+
+The benchmark contains 12 hardcoded seed tasks across 3 difficulty tiers:
+
+- Easy: 5 single-function tasks with one bug each
+- Medium: 4 class-based tasks with multiple interacting bugs
+- Hard: 3 multi-file tasks with cross-module integration failures
+
+Each task includes:
+
+- PR-style title and description
+- buggy code
+- public tests used for intermediate feedback
+- hidden tests used for final validation
+- deterministic attempt limits
+
+Attempt limits:
+
+- easy: 3
+- medium: 4
+- hard: 4
+
+## Interaction loop
+
+Each episode works like this:
+
+1. `reset()` returns a buggy pull request with code and public test descriptions.
+2. The agent submits revised code with `step(action)`.
+3. The environment parses the submission and runs tests in a subprocess.
+4. The environment returns reward and feedback.
+5. The episode ends when all tests pass or attempts are exhausted.
+
+## Reward design
+
+Reward is in `[0.0, 1.0]` and is shaped at every step.
+
+The score is composed from:
+
+- public test progress
+- syntax and import validity
+- improvement over the best previous public-test score
+
+When all public tests pass, hidden tests are also checked and affect the final
+success condition.
+
+This means the agent gets useful partial credit before solving the whole task.
+
+## Action space
+
+`ReviewAction` has two fields:
+
+- `fixed_code`
+  full revised code submission
+  use a string for easy and medium tasks
+  use a filename-to-code dictionary for hard multi-file tasks
+- `summary`
+  optional short explanation of what changed
+
+## Observation space
+
+`ReviewObservation` includes:
+
+- `prompt`
+  PR context, current code, and public test descriptions
+- `feedback`
+  test feedback from the last submission
+- `reward`
+- `done`
+- `task_id`
+- `difficulty`
+- `attempt`
+- `max_attempts`
+- `tests_passed`
+- `tests_total`
+
+## State space
+
+`ReviewState` includes:
+
+- `episode_id`
+- `step_count`
+- `difficulty`
+- `current_score`
+- `best_score`
+- `task_id`
+- `max_attempts`
+- `tests_passed`
+- `tests_total`
+
+## Built-in UI and routes
+
+The server exposes the default OpenEnv web UI:
+
+- `/web/` for the interactive Gradio UI
+- `/docs` for Swagger UI
+- `/redoc` for ReDoc
+- `/health` for health checks
+- `/reset` to start a new episode
+- `/step` to submit a revision
+- `/state` to inspect the current environment state
+- `/ws` for the WebSocket client interface
+
+`/` redirects to `/web/` when the web interface is enabled.
 
 ## Run locally
 
-From the environment root:
+From the project root:
 
 ```bash
 openenv validate
 python server/app.py
 ```
 
-After the server starts, open:
-
-- `http://localhost:7860/` or `http://localhost:7860/web/` for the OpenEnv web UI
-- `http://localhost:7860/docs` for the interactive Swagger UI
-- `http://localhost:7860/redoc` for the static API docs
-
-## Run locally with Docker
-
-Build the image:
-
-```bash
-docker build -t code-review-env-local -f server/Dockerfile .
-```
-
-Run it:
-
-```bash
-docker run --rm -p 7861:7860 code-review-env-local
-```
-
 Then open:
 
-- `http://localhost:7861/` -> redirects to `/web/`
-- `http://localhost:7861/web/` -> OpenEnv web UI
-- `http://localhost:7861/docs` -> Swagger UI
-- `http://localhost:7861/health` -> health check
+- `http://localhost:7860/web/`
+- `http://localhost:7860/docs`
 
-## Action and observation spaces
+## Docker
 
-### Action
-
-The environment expects a `ReviewAction` with:
-
-- `bug_line`
-  `int` for easy tasks, or a list of bug report objects for medium and hard tasks
-- `bug_type`
-  `str` for easy tasks, or a list of bug type strings for medium and hard tasks
-- `description`
-  short explanation or summary of the bug report
-- `fixed_code`
-  corrected code as a string for easy and medium tasks, or a filename-to-code map
-  for hard tasks
-
-### Observation
-
-The environment returns a `ReviewObservation` with:
-
-- `done`
-- `reward`
-- `prompt`
-- `feedback`
-- `task_id`
-- `difficulty`
-
-### State
-
-The `ReviewState` returned by `/state` contains:
-
-- `episode_id`
-- `step_count`
-- `difficulty`
-- `current_score`
-
-## What the built-in UI does
-
-The built-in OpenEnv web UI at `/web/` lets you:
-
-- browse the environment in a browser
-- inspect observations and task prompts
-- interact with the environment without writing a client first
-
-The built-in Swagger UI at `/docs` lets you:
-
-- inspect the request and response schemas
-- manually call `/reset`, `/step`, `/state`, `/health`, and `/schema`
-- verify the observation and action payloads without writing a client first
-
-The web UI is useful for interactive exploration. Swagger is useful for raw API
-debugging.
-
-## Main routes
-
-These routes are exposed by the server:
-
-- `GET /`
-  Redirects to `/web/` when the web interface is enabled.
-- `GET /web/`
-  Opens the built-in OpenEnv interactive web UI.
-- `GET /docs`
-  Opens Swagger UI.
-- `GET /redoc`
-  Opens ReDoc documentation.
-- `GET /openapi.json`
-  Returns the OpenAPI schema for the server.
-- `GET /health`
-  Simple health check. Returns `{"status":"healthy"}` when the server is up.
-- `GET /metadata`
-  Returns basic environment metadata.
-- `GET /schema`
-  Returns the JSON schemas for the action, observation, and state models.
-- `GET /state`
-  Returns the current environment state for the active session context.
-- `POST /reset`
-  Starts a new episode and returns the initial observation. For this project,
-  that observation contains the buggy code prompt and task metadata.
-- `POST /step`
-  Submits a `ReviewAction` and returns the graded result. This environment is
-  single-step, so one `step` completes the episode.
-- `WS /ws`
-  Persistent WebSocket endpoint used by the OpenEnv client. This is the main
-  route used by `client.py`, `trl_env.py`, and `inference.py`.
-- `POST /mcp`
-  MCP JSON-RPC endpoint.
-- `WS /mcp`
-  MCP WebSocket endpoint.
-
-## How this environment behaves
-
-Each episode is exactly:
-
-1. `reset()`
-2. one `step(action)`
-3. done
-
-`reset()` chooses one random task from the selected difficulty tier and returns
-the buggy code as the prompt.
-
-`step()` grades the submitted action:
-
-- easy tasks use `grade_easy`
-- medium tasks use `grade_medium`
-- hard tasks use `grade_hard`
-
-The returned observation includes:
-
-- `done`
-- `reward`
-- `feedback`
-- `task_id`
-- `difficulty`
-
-## Task set
-
-This environment includes 12 hardcoded tasks:
-
-- Easy: 5 tasks, one short function, one bug each
-- Medium: 4 tasks, one class, two bugs each
-- Hard: 3 tasks, two Python modules, three bugs total with exactly one cross-module bug
-
-Difficulty progression:
-
-- Easy tasks test single-bug localization and simple repair
-- Medium tasks test multi-bug matching in one class
-- Hard tasks test multi-file reasoning and integration failures
-
-## How to use the API manually
-
-Example reset request:
+Build:
 
 ```bash
-curl -X POST http://localhost:7860/reset \
-  -H "Content-Type: application/json" \
-  -d '{"difficulty":"easy"}'
+docker build -t code-review-env .
 ```
 
-Example step request:
+Run:
 
 ```bash
-curl -X POST http://localhost:7860/step \
-  -H "Content-Type: application/json" \
-  -d '{
-    "action": {
-      "bug_line": 2,
-      "bug_type": "wrong operator",
-      "description": "comparison operator age",
-      "fixed_code": "def is_adult(age):\n    return age >= 18",
-      "metadata": {}
-    }
-  }'
+docker run --rm -p 7860:7860 code-review-env
 ```
 
-For normal use, prefer the provided Python client in `client.py`, which talks to
-the server over WebSocket.
+## Quick smoke test
+
+With the server running locally:
+
+```bash
+python smoke_test.py
+```
+
+The smoke test:
+
+- resets to a known easy task
+- submits one incorrect revision and gets partial reward
+- submits a correct revision and finishes the episode
+- prints the final state
+
+## Python client
+
+Example:
+
+```python
+from code_review_env import CodeReviewEnv, ReviewAction
+
+client = CodeReviewEnv(base_url="http://localhost:7860").sync()
+
+with client:
+    reset_result = client.reset(difficulty="easy")
+    prompt = reset_result.observation.prompt
+
+    result = client.step(
+        ReviewAction(
+            fixed_code="def square(n):\n    return n * n",
+            summary="Return the computed value.",
+        )
+    )
+    print(result.reward, result.done, result.observation.feedback)
+```
 
 ## Baseline inference
 
-The submission baseline is in `inference.py`.
+`inference.py` runs a reproducible baseline with the OpenAI client and the
+required structured stdout format.
 
-It is aligned to the bootcamp requirements:
+Required environment variables:
 
-- uses the OpenAI Python client
-- reads `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN`
-- runs deterministically with `temperature=0`
-- writes `results.json`
-- emits strict structured stdout logs using:
-  - `[START]`
-  - `[STEP]`
-  - `[END]`
+- `HF_TOKEN` or `OPENAI_API_KEY`
+- `API_BASE_URL`
+- `MODEL_NAME`
 
-Set the required variables before running:
+Example:
 
 ```bash
 export HF_TOKEN=your_token
@@ -252,59 +222,34 @@ export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
 python inference.py --url http://localhost:7860 --episodes 12 --seed 42
 ```
 
-The baseline iterates through tasks in a deterministic order and writes aggregate
-metrics plus episode-level details to `results.json`.
+The script writes `results.json` with:
+
+- `mean_score`
+- `std_score`
+- per-difficulty breakdown
+- episode-level details
+
+## Validation checklist
+
+Before submission:
+
+```bash
+openenv validate
+docker build .
+curl http://localhost:7860/health
+python smoke_test.py
+```
+
+For the deployed Space:
+
+```bash
+curl https://greenhacker-code-review-env.hf.space/health
+curl -X POST https://greenhacker-code-review-env.hf.space/reset \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
 
 ## Baseline scores
 
-Fill this section using the output of `results.json` after running `inference.py`
-with your submission model.
-
-Suggested format:
-
-```text
-Model: <MODEL_NAME>
-API_BASE_URL: <API_BASE_URL>
-Seed: 42
-Episodes: 12
-Mean score: <value>
-Std score: <value>
-Easy mean: <value>
-Medium mean: <value>
-Hard mean: <value>
-```
-
-Do not leave this empty before final submission if the round checklist requires
-baseline scores in the README.
-
-## Reward design
-
-The environment is single-step, but the reward is not binary.
-
-Partial credit is built into the graders:
-
-- easy tasks score line match, bug type match, and syntactic fix quality separately
-- medium tasks score each bug independently and penalize misses and false positives
-- hard tasks combine bug identification F1, syntax validity, cross-module detection,
-  and summary quality
-
-This means the agent gets graded signal even when the final repair is incomplete.
-
-## Project files
-
-- `tasks.py`
-  Hardcoded benchmark tasks.
-- `models.py`
-  `ReviewAction`, `ReviewObservation`, and `ReviewState`.
-- `graders.py`
-  Scoring logic for easy, medium, and hard tasks.
-- `server/environment.py`
-  Single-step OpenEnv environment implementation.
-- `server/app.py`
-  FastAPI app wiring.
-- `client.py`
-  WebSocket client for the environment.
-- `trl_env.py`
-  TRL/GRPO-compatible tool environment wrapper.
-- `inference.py`
-  End-to-end evaluation script that writes `results.json`.
+Run `inference.py` and paste the resulting aggregate numbers here before final
+submission.
