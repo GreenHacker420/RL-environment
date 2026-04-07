@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 import uvicorn
-from openenv.core.env_server import create_fastapi_app
+from openenv.core.env_server.http_server import create_app
 
 try:
     from ..models import ReviewAction, ReviewObservation
@@ -17,11 +17,13 @@ except ImportError:
     from models import ReviewAction, ReviewObservation
     from server.environment import CodeReviewEnv
 
+os.environ.setdefault("ENABLE_WEB_INTERFACE", "true")
 
-app = create_fastapi_app(
-    env=CodeReviewEnv,
-    action_cls=ReviewAction,
-    observation_cls=ReviewObservation,
+app = create_app(
+    CodeReviewEnv,
+    ReviewAction,
+    ReviewObservation,
+    env_name="code_review_env",
     max_concurrent_envs=64,
 )
 

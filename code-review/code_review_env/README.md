@@ -16,16 +16,18 @@ tags:
 CodeReviewEnv is a small OpenEnv benchmark where an agent reviews buggy Python code,
 identifies bug locations, classifies bug types, and submits corrected code.
 
-This project does not include a custom frontend. The UI you get by default comes
-from OpenEnv/FastAPI:
+This project includes the default OpenEnv web UI. When the web interface is enabled,
+the server exposes:
 
+- Web UI at `http://localhost:7860/web/`
+- Root redirect from `http://localhost:7860/` to `/web/`
 - Swagger UI at `http://localhost:7860/docs`
 - ReDoc at `http://localhost:7860/redoc`
 - OpenAPI schema at `http://localhost:7860/openapi.json`
 
-If you want a custom browser UI for playing with tasks, that would need to be
-built separately. Out of the box, OpenEnv gives you the API server, the docs UI,
-and the WebSocket environment session endpoint.
+The `/web/` UI is the built-in OpenEnv Gradio interface. It is not a custom app
+for this benchmark, but it does let you inspect tasks and interact with the
+environment in the browser.
 
 The task set is fully hardcoded in `tasks.py`:
 
@@ -44,8 +46,30 @@ python server/app.py
 
 After the server starts, open:
 
+- `http://localhost:7860/` or `http://localhost:7860/web/` for the OpenEnv web UI
 - `http://localhost:7860/docs` for the interactive Swagger UI
 - `http://localhost:7860/redoc` for the static API docs
+
+## Run locally with Docker
+
+Build the image:
+
+```bash
+docker build -t code-review-env-local -f server/Dockerfile .
+```
+
+Run it:
+
+```bash
+docker run --rm -p 7861:7860 code-review-env-local
+```
+
+Then open:
+
+- `http://localhost:7861/` -> redirects to `/web/`
+- `http://localhost:7861/web/` -> OpenEnv web UI
+- `http://localhost:7861/docs` -> Swagger UI
+- `http://localhost:7861/health` -> health check
 
 ## Action and observation spaces
 
@@ -85,19 +109,29 @@ The `ReviewState` returned by `/state` contains:
 
 ## What the built-in UI does
 
-The built-in Swagger UI lets you:
+The built-in OpenEnv web UI at `/web/` lets you:
+
+- browse the environment in a browser
+- inspect observations and task prompts
+- interact with the environment without writing a client first
+
+The built-in Swagger UI at `/docs` lets you:
 
 - inspect the request and response schemas
 - manually call `/reset`, `/step`, `/state`, `/health`, and `/schema`
 - verify the observation and action payloads without writing a client first
 
-It is useful for debugging the environment API, but it is not a task-specific
-visual interface for code review episodes.
+The web UI is useful for interactive exploration. Swagger is useful for raw API
+debugging.
 
 ## Main routes
 
 These routes are exposed by the server:
 
+- `GET /`
+  Redirects to `/web/` when the web interface is enabled.
+- `GET /web/`
+  Opens the built-in OpenEnv interactive web UI.
 - `GET /docs`
   Opens Swagger UI.
 - `GET /redoc`
