@@ -1,3 +1,16 @@
+---
+title: CodeReviewEnv
+emoji: "🧪"
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+app_port: 7860
+base_path: /web
+tags:
+  - openenv
+---
+
 # CodeReviewEnv
 
 CodeReviewEnv is an OpenEnv environment for iterative code review and debugging.
@@ -9,7 +22,7 @@ than a one-shot code quiz. The main signal comes from execution-based grading:
 submitted code is parsed and tested in a subprocess, and reward reflects real
 progress on the task.
 
-## Why this benchmark
+## Motivation
 
 Most code benchmarks are single-turn. Real debugging is not.
 
@@ -24,7 +37,42 @@ In practice, engineers:
 CodeReviewEnv turns that loop into an RL environment with shaped rewards and
 clean episode boundaries.
 
-## Environment summary
+## Judging Criteria Mapping
+
+### Real-world utility
+
+- Domain is real: code review and debugging.
+- Tasks are framed as pull requests with reviewer/developer context.
+- Reward is tied to execution outcomes, not just answer matching.
+
+### Task and grader quality
+
+- 12 tasks across easy, medium, and hard tiers.
+- Grading is deterministic and execution-based.
+- Easy tasks cover single-bug fixes.
+- Medium tasks cover multi-bug class repair.
+- Hard tasks cover multi-file integration failures.
+
+### Environment design
+
+- Multi-step interaction instead of one-shot scoring.
+- Partial reward is returned before task completion.
+- Episodes terminate when solved or attempts run out.
+- State tracks best progress over the trajectory.
+
+### Code quality and spec compliance
+
+- Typed OpenEnv models for action, observation, and state.
+- `openenv.yaml` is included.
+- Dockerfile is provided at the repo root.
+- The environment passes `openenv validate`.
+
+### Creativity and novelty
+
+- The benchmark is closer to an engineering debugging loop than a static coding quiz.
+- It combines PR-style context, iterative repair, and execution-based reward.
+
+## Environment Summary
 
 - Domain: code review / debugging
 - API: OpenEnv `reset()` / `step()` / `state()`
@@ -33,7 +81,7 @@ clean episode boundaries.
 - Deployment target: Hugging Face Space with Docker
 - Client mode: WebSocket
 
-## Task set
+## Task Set
 
 The benchmark contains 12 seed tasks across 3 difficulty tiers.
 
@@ -58,7 +106,7 @@ Attempt limits:
 - medium: 4
 - hard: 4
 
-## Core interaction loop
+## Core Interaction Loop
 
 Each episode works like this:
 
@@ -76,7 +124,7 @@ Each episode works like this:
 
 This gives useful trajectory-level learning signal instead of a single binary score.
 
-## Reward design
+## Reward Design
 
 Reward is always in `[0.0, 1.0]`.
 
@@ -96,7 +144,7 @@ Notes:
 This makes the reward function dense enough for RL while still being grounded in
 actual code behavior.
 
-## Action space
+## Action Space
 
 The action model is intentionally simple.
 
@@ -118,7 +166,7 @@ ReviewAction(
 )
 ```
 
-## Observation space
+## Observation Space
 
 `ReviewObservation` contains:
 
@@ -135,7 +183,7 @@ ReviewAction(
 - `tests_passed`
 - `tests_total`
 
-## State space
+## State Space
 
 `ReviewState` contains:
 
@@ -149,26 +197,26 @@ ReviewAction(
 - `tests_passed`
 - `tests_total`
 
-## Repository layout
+## Repository Layout
 
-- [tasks.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/tasks.py)
+- `tasks.py`
   task bank, PR metadata, public tests, hidden tests
-- [graders.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/graders.py)
+- `graders.py`
   execution-based evaluation logic
-- [models.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/models.py)
+- `models.py`
   typed action, observation, and state models
-- [server/environment.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/server/environment.py)
+- `server/environment.py`
   main OpenEnv environment loop
-- [client.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/client.py)
+- `client.py`
   WebSocket client
-- [trl_env.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/trl_env.py)
+- `trl_env.py`
   TRL tool environment wrapper
-- [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)
+- `inference.py`
   reproducible baseline runner
-- [smoke_test.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/smoke_test.py)
+- `smoke_test.py`
   local sanity test
 
-## Built-in UI and routes
+## Built-in UI and Routes
 
 The server exposes the default OpenEnv web UI:
 
@@ -183,7 +231,13 @@ The server exposes the default OpenEnv web UI:
 
 `/` redirects to `/web/` when the web interface is enabled.
 
-## Run locally
+## Stateful API Note
+
+- `/reset` is easy to test over plain HTTP.
+- `/step` is stateful and should be tested through the built-in `/web/` UI or the Python/WebSocket client.
+- Plain one-off `curl` calls to `/step` are not a reliable manual test because they do not preserve environment session state.
+
+## Run Locally
 
 From the project root:
 
@@ -211,7 +265,7 @@ Run:
 docker run --rm -p 7860:7860 code-review-env
 ```
 
-## Quick smoke test
+## Quick Smoke Test
 
 With the server running:
 
@@ -226,7 +280,7 @@ The smoke test:
 3. submits a correct revision and finishes the episode
 4. prints final state
 
-## Python client example
+## Python Client Example
 
 ```python
 from code_review_env import CodeReviewEnv, ReviewAction
@@ -248,7 +302,7 @@ with client:
     print(result.observation.feedback)
 ```
 
-## Manual API testing
+## Manual API Testing
 
 Reset:
 
@@ -258,29 +312,17 @@ curl -X POST http://localhost:7860/reset \
   -d '{"difficulty":"easy"}'
 ```
 
-Step:
-
-```bash
-curl -X POST http://localhost:7860/step \
-  -H "Content-Type: application/json" \
-  -d '{
-    "action": {
-      "fixed_code": "def square(n):\n    result = n * n\n    return result",
-      "summary": "Return the computed result.",
-      "metadata": {}
-    }
-  }'
-```
-
 State:
 
 ```bash
 curl http://localhost:7860/state
 ```
 
-## TRL integration
+For `step`, prefer the Python client or `/web/`.
 
-[trl_env.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/trl_env.py) provides `CodeReviewToolEnv` for TRL `environment_factory`.
+## TRL Integration
+
+`trl_env.py` provides `CodeReviewToolEnv` for TRL `environment_factory`.
 
 Exposed tool methods:
 
@@ -289,9 +331,9 @@ Exposed tool methods:
 
 That wrapper keeps the interface narrow and tool-friendly for multi-turn training.
 
-## Baseline inference
+## Baseline Inference
 
-[inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py) runs a reproducible baseline using the OpenAI client and emits the required structured logs:
+`inference.py` runs a reproducible baseline using the OpenAI client and emits the required structured logs:
 
 - `[START]`
 - `[STEP]`
@@ -299,9 +341,12 @@ That wrapper keeps the interface narrow and tool-friendly for multi-turn trainin
 
 Required environment variables:
 
-- `HF_TOKEN` or `OPENAI_API_KEY`
+- `HF_TOKEN`
 - `API_BASE_URL`
 - `MODEL_NAME`
+
+`API_BASE_URL` and `MODEL_NAME` include defaults in the script.
+`HF_TOKEN` is mandatory.
 
 Example:
 
@@ -319,26 +364,29 @@ The script writes `results.json` with:
 - per-difficulty breakdown
 - episode-level details
 
-## Validation checklist
+## Operator Checklist
 
 Before submission:
 
 ```bash
 openenv validate
-docker build .
 python smoke_test.py
+docker build .
 ```
 
-Recommended checks:
+Then:
+
+1. run `python inference.py --url <env-url> --episodes 12 --seed 42`
+2. confirm `results.json` is created
+3. copy real baseline numbers into the README
+4. confirm the Hugging Face Space is in `Running`
+5. stop unnecessary Spaces before submission
+
+Recommended endpoint checks:
 
 ```bash
 curl http://localhost:7860/health
 curl -X POST http://localhost:7860/reset -H "Content-Type: application/json" -d '{}'
-```
-
-For the deployed Space:
-
-```bash
 curl https://greenhacker-code-review-env.hf.space/health
 curl -X POST https://greenhacker-code-review-env.hf.space/reset \
   -H "Content-Type: application/json" \
@@ -353,21 +401,22 @@ Once deployed, verify:
 
 - `/health` returns `200`
 - `/reset` returns an observation
+- `/schema` shows the `fixed_code` + `summary` action model
 - `/web/` loads
 - `/docs` loads
 
-## Current limitations
+## Current Limitations
 
 - Tasks are still from a fixed curated bank, not generated variants.
 - Hidden tests are deterministic but not yet templated per seed.
 - The benchmark currently favors full-file submissions over patch application.
 
-Those are acceptable for Round 1, but the next improvement would be templated task
-variants with the same execution-based grading loop.
+These are acceptable for Round 1. The next improvement after submission would be
+templated task variants with the same execution-based grading loop.
 
-## Baseline scores
+## Baseline Scores
 
-Run [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py) and paste the resulting aggregate numbers here before final submission.
+Run `inference.py` and paste the resulting aggregate numbers here before final submission.
 
 - Mean score: pending
 - Std score: pending

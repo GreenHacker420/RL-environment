@@ -25,7 +25,6 @@ except ImportError:
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 HF_TOKEN = os.getenv("HF_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 BENCHMARK = "code_review_env"
 TEMPERATURE = 0
 MAX_TOKENS = 2200
@@ -45,20 +44,15 @@ def log_step(step: int, action: str, reward: float, done: bool, error: str | Non
     )
 
 
-def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> None:
+def log_end(success: bool, steps: int, rewards: list[float]) -> None:
     reward_values = ",".join(f"{reward:.2f}" for reward in rewards)
-    print(
-        f"[END] success={str(success).lower()} steps={steps} "
-        f"score={score:.3f} rewards={reward_values}",
-        flush=True,
-    )
+    print(f"[END] success={str(success).lower()} steps={steps} rewards={reward_values}", flush=True)
 
 
 def require_api_key() -> str:
-    api_key = HF_TOKEN or OPENAI_API_KEY
-    if not api_key:
-        raise RuntimeError("Set HF_TOKEN or OPENAI_API_KEY before running inference.py.")
-    return api_key
+    if not HF_TOKEN:
+        raise RuntimeError("HF_TOKEN environment variable is required.")
+    return HF_TOKEN
 
 
 def build_system_prompt() -> str:
@@ -155,22 +149,22 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
     np.random.seed(seed)
 
     model_client = OpenAI(base_url=API_BASE_URL, api_key=require_api_key())
-    env_client = CodeReviewEnvClient(base_url=url).sync()
     records: list[dict[str, Any]] = []
 
-    with env_client:
-        for episode_index, task in enumerate(task_schedule(episodes), start=1):
-            rewards: list[float] = []
-            steps_taken = 0
-            score = 0.0
-            success = False
-            error_message: str | None = None
-            model_outputs: list[str] = []
-            action_logs: list[str] = []
-            last_feedback = ""
+    for episode_index, task in enumerate(task_schedule(episodes), start=1):
+        rewards: list[float] = []
+        steps_taken = 0
+        score = 0.0
+        success = False
+        error_message: str | None = None
+        model_outputs: list[str] = []
+        action_logs: list[str] = []
+        last_feedback = ""
 
-            log_start(task=task["id"], env=BENCHMARK, model=MODEL_NAME)
-            try:
+        log_start(task=task["id"], env=BENCHMARK, model=MODEL_NAME)
+        try:
+            env_client = CodeReviewEnvClient(base_url=url).sync()
+            with env_client:
                 reset_result = env_client.reset(
                     difficulty=task["difficulty"],
                     task_id=task["id"],
@@ -212,33 +206,33 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 state = env_client.state()
                 score = float(state.best_score)
                 success = "Solved." in last_feedback
-            except Exception as exc:
-                error_message = str(exc).replace("\n", " ").strip()
-                log_step(
-                    step=max(1, steps_taken + 1),
-                    action=action_logs[-1] if action_logs else "null",
-                    reward=0.0,
-                    done=True,
-                    error=error_message,
-                )
-            finally:
-                log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
-
-            records.append(
-                {
-                    "episode": episode_index,
-                    "task_id": task["id"],
-                    "difficulty": task["difficulty"],
-                    "score": score,
-                    "success": success,
-                    "steps": steps_taken,
-                    "rewards": rewards,
-                    "error": error_message,
-                    "model_responses": model_outputs,
-                    "actions": action_logs,
-                    "final_feedback": last_feedback,
-                }
+        except Exception as exc:
+            error_message = str(exc).replace("\n", " ").strip()
+            log_step(
+                step=max(1, steps_taken + 1),
+                action=action_logs[-1] if action_logs else "null",
+                reward=0.0,
+                done=True,
+                error=error_message,
             )
+        finally:
+            log_end(success=success, steps=steps_taken, rewards=rewards)
+
+        records.append(
+            {
+                "episode": episode_index,
+                "task_id": task["id"],
+                "difficulty": task["difficulty"],
+                "score": score,
+                "success": success,
+                "steps": steps_taken,
+                "rewards": rewards,
+                "error": error_message,
+                "model_responses": model_outputs,
+                "actions": action_logs,
+                "final_feedback": last_feedback,
+            }
+        )
 
     scores = [record["score"] for record in records]
     results = {
