@@ -1,41 +1,54 @@
-from typing import Dict, Any, Optional
+from __future__ import annotations
+
+from typing import Any
+
 from openenv.core import EnvClient
 from openenv.core.client_types import StepResult
-from openenv.core.env_server.types import State
 
 try:
-    from .models import CodeReviewAction, CodeReviewObservation
-except (ImportError, ModuleNotFoundError):
-    from models import CodeReviewAction, CodeReviewObservation
+    from .models import ReviewAction, ReviewObservation, ReviewState
+except ImportError:
+    from models import ReviewAction, ReviewObservation, ReviewState
 
-class CodeReviewEnv(EnvClient[CodeReviewAction, CodeReviewObservation, State]):
-    def _step_payload(self, action: CodeReviewAction) -> Dict:
+
+class CodeReviewEnvClient(
+    EnvClient[ReviewAction, ReviewObservation, ReviewState]
+):
+    """WebSocket client for CodeReviewEnv."""
+
+    def _step_payload(self, action: ReviewAction) -> dict[str, Any]:
         return {
-            "action_type": action.action_type,
             "bug_line": action.bug_line,
             "bug_type": action.bug_type,
             "description": action.description,
             "fixed_code": action.fixed_code,
-            "file_path": action.file_path,
+            "metadata": action.metadata,
         }
 
-    def _parse_result(self, payload: Dict) -> StepResult[CodeReviewObservation]:
-        obs_data = payload.get("observation", {})
-        observation = CodeReviewObservation(
-            content=obs_data.get("content"),
-            feedback=obs_data.get("feedback", ""),
+    def _parse_result(self, payload: dict[str, Any]) -> StepResult[ReviewObservation]:
+        observation_data = payload.get("observation", {})
+        observation = ReviewObservation(
             done=payload.get("done", False),
-            reward=payload.get("reward", 0.0),
-            metadata=obs_data.get("metadata", {}),
+            reward=float(payload.get("reward", 0.0) or 0.0),
+            prompt=observation_data.get("prompt", ""),
+            feedback=observation_data.get("feedback", ""),
+            task_id=observation_data.get("task_id", ""),
+            difficulty=observation_data.get("difficulty", ""),
+            metadata=observation_data.get("metadata", {}),
         )
         return StepResult(
             observation=observation,
-            reward=payload.get("reward", 0.0),
+            reward=float(payload.get("reward", 0.0) or 0.0),
             done=payload.get("done", False),
         )
 
-    def _parse_state(self, payload: Dict) -> State:
-        return State(
-            episode_id=payload.get("episode_id"),
-            step_count=payload.get("step_count", 0),
+    def _parse_state(self, payload: dict[str, Any]) -> ReviewState:
+        return ReviewState(
+            episode_id=payload.get("episode_id", ""),
+            step_count=int(payload.get("step_count", 0)),
+            difficulty=payload.get("difficulty", "easy"),
+            current_score=float(payload.get("current_score", 0.0) or 0.0),
         )
+
+
+CodeReviewEnv = CodeReviewEnvClient

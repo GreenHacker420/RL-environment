@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openenv-code_review_env"
+version = "1.0.0"
+description = "LLM agent identifies and fixes bugs in Python code snippets"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26.0",
+    "openenv-core[core]>=0.2.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+server = "code_review_env.server.app:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["code_review_env", "code_review_env.server"]
+package-dir = { "code_review_env" = ".", "code_review_env.server" = "server" }

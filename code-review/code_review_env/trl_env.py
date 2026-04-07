@@ -1,79 +1,90 @@
+from __future__ import annotations
+
 import os
-import json
-from typing import Optional, Dict, Any
-from .client import CodeReviewEnv
-from .models import CodeReviewAction
+from typing import Any
+
+try:
+    from .client import CodeReviewEnvClient
+    from .models import ReviewAction
+except ImportError:
+    from client import CodeReviewEnvClient
+    from models import ReviewAction
+
 
 ENV_URL = os.environ.get("ENV_URL", "http://localhost:7860")
-SUPPORTS_CONCURRENT_SESSIONS: bool = True
+SUPPORTS_CONCURRENT_SESSIONS = True
 
-class CodeReviewGRPOEnv:
-    def __init__(self):
-        self.client = CodeReviewEnv(base_url=ENV_URL)
+
+class CodeReviewToolEnv:
+    def __init__(self) -> None:
+        self._client = CodeReviewEnvClient(base_url=ENV_URL).sync()
+        self._client.connect()
         self.reward = 0.0
         self.done = False
-        self._last_obs = None
+        self._bug_line: int | list[dict[str, Any]] = -1
+        self._bug_type: str | list[str] = ""
+        self._description = ""
 
-    def reset(self, **kwargs) -> Optional[str]:
-        """
-        Reset the environment for a new episode.
-        Args:
-            difficulty: The difficulty level (easy, medium, hard).
-        """
+    def reset(self, **kwargs: Any) -> str:
         difficulty = kwargs.get("difficulty", "easy")
-        result = self.client.reset(difficulty=difficulty)
+        result = self._client.reset(difficulty=difficulty)
         self.reward = 0.0
         self.done = False
-        self._last_obs = result.observation
-        
-        content = self._last_obs.content
-        if isinstance(content, dict):
-            content_str = json.dumps(content, indent=2)
-        else:
-            content_str = str(content)
-            
-        return f"{self._last_obs.feedback}\n\nCode to review:\n{content_str}"
+        self._bug_line = -1
+        self._bug_type = ""
+        self._description = ""
+        return result.observation.prompt
 
-    def identify_bug(self, bug_line: int, bug_type: str, description: str, file_path: Optional[str] = None) -> str:
-        """Identify a bug in the code snippet.
+    def identify_bug(
+        self,
+        bug_line: int | list[dict[str, Any]],
+        bug_type: str | list[str],
+        description: str,
+    ) -> str:
+        """
+        Record the bug report that will be submitted with the final fix.
+
         Args:
-            bug_line: The line number where the bug occurs
-            bug_type: Type of bug: syntax, logic, runtime, or style
-            description: Brief description of the bug
-            file_path: (Optional) The filename for multi-file tasks
-        Returns:
-            Feedback on whether the identification is correct.
+            bug_line: A single line number for easy tasks or a list of bug report
+                dictionaries for medium and hard tasks. Each dictionary can include
+                line, file, bug_type, and description.
+            bug_type: A single bug type string for easy tasks or a list of bug type
+                strings for medium and hard tasks.
+            description: A short summary of the bug report. For medium and hard tasks,
+                include the key findings across all reported bugs.
         """
         if self.done:
             raise ValueError("Episode complete.")
 
-        action = CodeReviewAction(
-            action_type="identify",
-            bug_line=bug_line,
-            bug_type=bug_type,
-            description=description,
-            file_path=file_path
-        )
-        result = self.client.step(action)
-        self.reward = result.reward
-        self.done = result.done
-        return result.observation.feedback
+        self._bug_line = bug_line
+        self._bug_type = bug_type
+        self._description = description
+        return "Bug report recorded. Call submit_fix to finish the episode."
 
-    def submit_fix(self, fixed_code: str) -> str:
-        """Submit the corrected version of the code.
+    def submit_fix(self, fixed_code: str | dict[str, str]) -> str:
+        """
+        Submit the final corrected code and complete the episode.
+
         Args:
-            fixed_code: The complete corrected code as a string
-        Returns:
-            Test results showing pass/fail for each test case.
+            fixed_code: The corrected code as a single Python string for easy and
+                medium tasks, or a filename-to-code dictionary for hard tasks.
         """
         if self.done:
             raise ValueError("Episode complete.")
 
-        action = CodeReviewAction(
-            action_type="submit",
-            fixed_code=fixed_code
+        action = ReviewAction(
+            bug_line=self._bug_line,
+            bug_type=self._bug_type,
+            description=self._description,
+            fixed_code=fixed_code,
         )
-        result = self.client.step(action)
-        self.reward = result.reward
+        result = self._client.step(action)
+        self.reward = float(result.reward or 0.0)
         self.done = result.done
         return result.observation.feedback
+
+    def __del__(self) -> None:
+        try:
+            self._client.close()
+        except Exception:
+            pass

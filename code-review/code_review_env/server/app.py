@@ -1,33 +1,35 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
+from __future__ import annotations
 
-"""FastAPI application for the Code Review Environment."""
+import os
+import sys
+from pathlib import Path
 
-try:
-    from openenv.core.env_server.http_server import create_app
-except ImportError as e:
-    raise ImportError(
-        "openenv is required. Install with 'pip install openenv'"
-    ) from e
+import uvicorn
+from openenv.core.env_server import create_fastapi_app
 
 try:
-    from ..models import CodeReviewAction, CodeReviewObservation
-    from .environment import CodeReviewEnvironment
+    from ..models import ReviewAction, ReviewObservation
+    from .environment import CodeReviewEnv
 except ImportError:
-    from models import CodeReviewAction, CodeReviewObservation
-    from server.environment import CodeReviewEnvironment
+    ROOT = Path(__file__).resolve().parents[1]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from models import ReviewAction, ReviewObservation
+    from server.environment import CodeReviewEnv
 
-# Create the app
-app = create_app(
-    CodeReviewEnvironment,
-    CodeReviewAction,
-    CodeReviewObservation,
-    env_name="code_review_env",
+
+app = create_fastapi_app(
+    env=CodeReviewEnv,
+    action_cls=ReviewAction,
+    observation_cls=ReviewObservation,
     max_concurrent_envs=64,
 )
 
+
+def main(host: str = "0.0.0.0", port: int | None = None) -> None:
+    resolved_port = port if port is not None else int(os.environ.get("PORT", "7860"))
+    uvicorn.run(app, host=host, port=resolved_port)
+
+
 if __name__ == "__main__":
-    import uvicorn
-    import os
-    port = int(os.environ.get("PORT", 7860))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    main()

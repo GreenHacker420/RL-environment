@@ -1,29 +1,21 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PORT=7860
 
 WORKDIR /app
 
-# Create non-root user
-RUN useradd -m appuser
+RUN useradd --create-home --shell /usr/sbin/nologin appuser
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir fastapi uvicorn openenv
+COPY server/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy code
-COPY . .
-
-# Adjust permissions
+COPY . /app
 RUN chown -R appuser:appuser /app
+
 USER appuser
 
-# Set environment variables
-ENV PORT=7860
-ENV PYTHONPATH=/app
-
-# Expose port
 EXPOSE 7860
 
-# Run server
-# Note: entrypoint relative to PYTHONPATH
-CMD uvicorn code_review_env.server.app:app --host 0.0.0.0 --port $PORT
+CMD sh -c "uvicorn code_review_env.server.app:app --host 0.0.0.0 --port ${PORT:-7860}"

@@ -1,0 +1,76 @@
+{
+  "seed": 42,
+  "episodes": [
+    {
+      "episode": 1,
+      "task_id": "easy_missing_return",
+      "difficulty": "easy",
+      "score": 1.0,
+      "feedback": "Bug line matched. Bug type matched. Fix parsed and description used task keywords.",
+      "step_count": 1
+    },
+    {
+      "episode": 2,
+      "task_id": "medium_file_processor",
+      "difficulty": "medium",
+      "score": 1.0,
+      "feedback": "Matched bug near line 4 with type 'wrong return value'. Matched bug near line 11 with type 'wrong index'. Fixed code parsed successfully.",
+      "step_count": 1
+    },
+    {
+      "episode": 3,
+      "task_id": "hard_auth_session",
+      "difficulty": "hard",
+      "score": 0.9999999999999999,
+      "feedback": "Identification F1=1.00. Fix syntax=ok. Cross-module bug=found. Summary keywords=3.",
+      "step_count": 1
+    },
+    {
+      "episode": 4,
+      "task_id": "easy_wrong_variable_name",
+      "difficulty": "easy",
+      "score": 1.0,
+      "feedback": "Bug line matched. Bug type matched. Fix parsed and description used task keywords.",
+      "step_count": 1
+    },
+    {
+      "episode": 5,
+      "task_id": "medium_bank_account",
+      "difficulty": "medium",
+      "score": 1.0,
+      "feedback": "Matched bug near line 8 with type 'wrong variable name'. Matched bug near line 14 with type 'wrong operator'. Fixed code parsed successfully.",
+      "step_count": 1
+    },
+    {
+      "episode": 6,
+      "task_id": "hard_auth_session",
+      "difficulty": "hard",
+      "score": 0.9999999999999999,
+      "feedback": "Identification F1=1.00. Fix syntax=ok. Cross-module bug=found. Summary keywords=3.",
+      "step_count": 1
+    }
+  ],
+  "episodes_requested": 6,
+  "temperature": 0,
+  "mean_score": 1.0,
+  "std_score": 5.733167046599012e-17,
+  "per_difficulty": {
+    "easy": {
+      "count": 2,
+      "mean_score": 1.0,
+      "std_score": 0.0
+    },
+    "medium": {
+      "count": 2,
+      "mean_score": 1.0,
+      "std_score": 0.0
+    },
+    "hard": {
+      "count": 2,
+      "mean_score": 0.9999999999999999,
+      "std_score": 0.0
+    }
+  },
+  "task_count": 12,
+  "url": "http://127.0.0.1:7860"
+}
