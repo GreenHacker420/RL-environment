@@ -1,16 +1,3 @@
----
-title: CodeReviewEnv
-emoji: "🧪"
-colorFrom: blue
-colorTo: green
-sdk: docker
-pinned: false
-app_port: 7860
-base_path: /web
-tags:
-  - openenv
----
-
 # CodeReviewEnv
 
 CodeReviewEnv is an OpenEnv environment for iterative code review and debugging.
