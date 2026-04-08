@@ -18,29 +18,55 @@ except ImportError:
 def main() -> None:
     client = CodeReviewEnvClient(base_url="http://localhost:7860").sync()
     with client:
-        reset_result = client.reset(difficulty="easy", task_id="easy_missing_return")
+        reset_result = client.reset(difficulty="easy", task_id="easy_implementation_discount", seed=42)
         print("RESET")
         print(json.dumps(reset_result.observation.model_dump(), indent=2))
+        task_brief = reset_result.observation.task_brief
+        workspace_path = next(iter(reset_result.observation.workspace_files))
+        function_name = task_brief.split("`")[1].split("(")[0]
 
-        first_attempt = client.step(
+        partial_update = client.step(
             ReviewAction(
-                fixed_code="def square(n):\n    result = n * n",
-                summary="Preserve the current code to confirm the test feedback.",
+                action_type="update_files",
+                files={
+                    workspace_path: (
+                        f"def {function_name}(subtotal, has_coupon):\n"
+                        "    return round(subtotal, 2)\n"
+                    )
+                },
+                summary="Intentionally incomplete implementation to verify partial progress.",
             )
         )
-        print("STEP 1")
-        print(json.dumps(first_attempt.observation.model_dump(), indent=2))
-        print("REWARD", first_attempt.reward)
+        print("UPDATE 1")
+        print(json.dumps(partial_update.observation.model_dump(), indent=2))
 
-        second_attempt = client.step(
+        first_test = client.step(ReviewAction(action_type="run_tests"))
+        print("TEST 1")
+        print(json.dumps(first_test.observation.model_dump(), indent=2))
+        print("REWARD", first_test.reward)
+
+        discount_percent = int(task_brief.split("apply a ")[1].split("%")[0])
+        rate = discount_percent / 100
+        corrected_code = (
+            f"def {function_name}(subtotal, has_coupon):\n"
+            f"    if has_coupon:\n"
+            f"        subtotal = subtotal * (1 - {rate})\n"
+            f"    return round(subtotal, 2)\n"
+        )
+        final_update = client.step(
             ReviewAction(
-                fixed_code="def square(n):\n    result = n * n\n    return result",
-                summary="Return the computed result so the helper passes the tests.",
+                action_type="update_files",
+                files={workspace_path: corrected_code},
+                summary="Apply the coupon only when requested and round to 2 decimals.",
             )
         )
-        print("STEP 2")
-        print(json.dumps(second_attempt.observation.model_dump(), indent=2))
-        print("REWARD", second_attempt.reward)
+        print("UPDATE 2")
+        print(json.dumps(final_update.observation.model_dump(), indent=2))
+
+        second_test = client.step(ReviewAction(action_type="run_tests"))
+        print("TEST 2")
+        print(json.dumps(second_test.observation.model_dump(), indent=2))
+        print("REWARD", second_test.reward)
 
         state = client.state()
         print("STATE")

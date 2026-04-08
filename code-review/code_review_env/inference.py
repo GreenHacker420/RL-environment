@@ -14,12 +14,12 @@ from openai import OpenAI
 
 try:
     from .client import CodeReviewEnvClient
-    from .models import ReviewAction
-    from .tasks import TASKS
+    from .models import ReviewAction, ReviewObservation
+    from .tasks import TASKS, render_workspace
 except ImportError:
     from client import CodeReviewEnvClient
-    from models import ReviewAction
-    from tasks import TASKS
+    from models import ReviewAction, ReviewObservation
+    from tasks import TASKS, render_workspace
 
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
@@ -27,7 +27,7 @@ MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 HF_TOKEN = os.getenv("HF_TOKEN")
 BENCHMARK = "code_review_env"
 TEMPERATURE = 0
-MAX_TOKENS = 2200
+MAX_TOKENS = 2600
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
@@ -57,19 +57,31 @@ def require_api_key() -> str:
 
 def build_system_prompt() -> str:
     return (
-        "You are debugging a pull request in an iterative code-review environment. "
-        "Return only valid JSON with keys: fixed_code and summary. "
-        "fixed_code must be a full code string for single-file tasks or a JSON object "
-        "mapping filenames to updated code strings for multi-file tasks."
+        "You are operating inside a guided Python coding workspace. "
+        "You receive a task brief, current workspace files, and deterministic test feedback. "
+        "Return only valid JSON with keys `files` and `summary`. "
+        "`files` must be an object mapping workspace file paths to the full replacement content for each changed file. "
+        "Do not invent new file paths. Do not include markdown fences."
     )
 
 
-def build_user_prompt(prompt: str, feedback: str, attempt: int, max_attempts: int) -> str:
+def build_user_prompt(observation: ReviewObservation) -> str:
+    failure_block = "None"
+    if observation.failure_details:
+        failure_block = "\n".join(f"- {detail}" for detail in observation.failure_details)
+
     return (
-        f"Attempt: {attempt}/{max_attempts}\n"
-        f"Feedback from previous submission: {feedback}\n\n"
-        f"{prompt}\n\n"
-        "Return only JSON."
+        f"Task brief:\n{observation.task_brief}\n\n"
+        f"Current workspace:\n{render_workspace(observation.workspace_files)}\n\n"
+        f"Latest feedback: {observation.feedback}\n"
+        f"Public tests passed: {observation.tests_passed}/{observation.tests_total}\n"
+        f"Test runs used: {observation.test_runs_used}/{observation.max_test_runs}\n"
+        f"Failure details:\n{failure_block}\n\n"
+        "Return only JSON with:\n"
+        '{\n'
+        '  "files": {"path.py": "full file content"},\n'
+        '  "summary": "short note"\n'
+        '}\n'
     )
 
 
@@ -80,19 +92,26 @@ def extract_json(text: str) -> dict[str, Any]:
     return json.loads(match.group(0))
 
 
-def normalize_action(payload: dict[str, Any]) -> ReviewAction:
+def normalize_update_payload(payload: dict[str, Any]) -> ReviewAction:
+    files = payload.get("files", {})
+    if not isinstance(files, dict):
+        files = {}
+
+    normalized_files: dict[str, str] = {}
+    for path, content in files.items():
+        if isinstance(path, str) and isinstance(content, str):
+            normalized_files[path] = content
+
     return ReviewAction(
-        fixed_code=payload.get("fixed_code", ""),
+        action_type="update_files",
+        files=normalized_files,
         summary=str(payload.get("summary", "")),
     )
 
 
-def get_model_action(
+def get_model_update(
     client: OpenAI,
-    prompt: str,
-    feedback: str,
-    attempt: int,
-    max_attempts: int,
+    observation: ReviewObservation,
     seed: int,
 ) -> tuple[str, ReviewAction]:
     response = client.chat.completions.create(
@@ -102,26 +121,20 @@ def get_model_action(
         seed=seed,
         messages=[
             {"role": "system", "content": build_system_prompt()},
-            {
-                "role": "user",
-                "content": build_user_prompt(
-                    prompt=prompt,
-                    feedback=feedback,
-                    attempt=attempt,
-                    max_attempts=max_attempts,
-                ),
-            },
+            {"role": "user", "content": build_user_prompt(observation)},
         ],
     )
     content = (response.choices[0].message.content or "").strip()
     payload = extract_json(content)
-    return content, normalize_action(payload)
+    return content, normalize_update_payload(payload)
 
 
 def sanitize_action_for_log(action: ReviewAction) -> str:
     payload = {
+        "action_type": action.action_type,
+        "paths": action.paths,
+        "files": sorted(action.files),
         "summary": action.summary,
-        "fixed_code_type": "dict" if isinstance(action.fixed_code, dict) else "str",
     }
     return json.dumps(payload, separators=(",", ":"), ensure_ascii=True)
 
@@ -160,52 +173,61 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
         model_outputs: list[str] = []
         action_logs: list[str] = []
         last_feedback = ""
+        env_client = CodeReviewEnvClient(base_url=url).sync()
 
         log_start(task=task["id"], env=BENCHMARK, model=MODEL_NAME)
         try:
-            env_client = CodeReviewEnvClient(base_url=url).sync()
-            with env_client:
-                reset_result = env_client.reset(
-                    difficulty=task["difficulty"],
-                    task_id=task["id"],
+            env_client.connect()
+            reset_result = env_client.reset(difficulty=task["difficulty"], task_id=task["id"], seed=seed)
+            observation = reset_result.observation
+
+            while True:
+                raw_model_response, update_action = get_model_update(
+                    client=model_client,
+                    observation=observation,
+                    seed=seed + episode_index + steps_taken,
                 )
-                observation = reset_result.observation
+                model_outputs.append(raw_model_response)
 
-                while True:
-                    attempt_number = observation.attempt + 1
-                    raw_model_response, action = get_model_action(
-                        client=model_client,
-                        prompt=observation.prompt,
-                        feedback=observation.feedback,
-                        attempt=attempt_number,
-                        max_attempts=observation.max_attempts,
-                        seed=seed + episode_index + steps_taken,
-                    )
-                    model_outputs.append(raw_model_response)
-                    action_log = sanitize_action_for_log(action)
-                    action_logs.append(action_log)
+                update_log = sanitize_action_for_log(update_action)
+                action_logs.append(update_log)
+                update_result = env_client.step(update_action)
+                steps_taken += 1
+                rewards.append(float(update_result.reward or 0.0))
+                log_step(
+                    step=steps_taken,
+                    action=update_log,
+                    reward=float(update_result.reward or 0.0),
+                    done=update_result.done,
+                    error=None,
+                )
+                observation = update_result.observation
+                last_feedback = observation.feedback
+                if update_result.done:
+                    success = observation.feedback.startswith("Solved.")
+                    break
 
-                    step_result = env_client.step(action)
-                    observation = step_result.observation
-                    reward = float(step_result.reward or 0.0)
-                    rewards.append(reward)
-                    steps_taken += 1
-                    last_feedback = observation.feedback
+                run_action = ReviewAction(action_type="run_tests")
+                run_log = sanitize_action_for_log(run_action)
+                action_logs.append(run_log)
+                test_result = env_client.step(run_action)
+                steps_taken += 1
+                rewards.append(float(test_result.reward or 0.0))
+                log_step(
+                    step=steps_taken,
+                    action=run_log,
+                    reward=float(test_result.reward or 0.0),
+                    done=test_result.done,
+                    error=None,
+                )
+                observation = test_result.observation
+                last_feedback = observation.feedback
+                if test_result.done:
+                    success = observation.feedback.startswith("Solved.")
+                    break
 
-                    log_step(
-                        step=steps_taken,
-                        action=action_log,
-                        reward=reward,
-                        done=step_result.done,
-                        error=None,
-                    )
-
-                    if step_result.done:
-                        break
-
-                state = env_client.state()
-                score = float(state.best_score)
-                success = "Solved." in last_feedback
+            state = env_client.state()
+            score = float(state.best_score)
         except Exception as exc:
             error_message = str(exc).replace("\n", " ").strip()
             log_step(
@@ -216,6 +238,10 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 error=error_message,
             )
         finally:
+            try:
+                env_client.close()
+            except Exception:
+                pass
             log_end(success=success, steps=steps_taken, rewards=rewards)
 
         records.append(

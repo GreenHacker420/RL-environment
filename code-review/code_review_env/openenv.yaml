@@ -1,7 +1,7 @@
 spec_version: 1
 name: code_review_env
 version: "1.0.0"
-description: "LLM agent identifies and fixes bugs in Python code snippets"
+description: "Guided Python coding workspace for iterative implementation, repair, and integration tasks"
 type: space
 runtime: fastapi
 app: server.app:app

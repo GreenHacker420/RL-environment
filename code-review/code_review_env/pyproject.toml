@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "openenv-code_review_env"
 version = "1.0.0"
-description = "LLM agent identifies and fixes bugs in Python code snippets"
+description = "Guided Python coding workspace for iterative implementation, repair, and integration tasks"
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26.0",

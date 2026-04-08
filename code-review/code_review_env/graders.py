@@ -306,6 +306,8 @@ def evaluate_workspace(
     if quality["messages"]:
         failure_details.extend(quality["messages"][:2])
 
+    active_results = hidden_results if run_hidden and hidden_results is not None else public_results
+
     return {
         "score": score,
         "public_passed": public_passed,
@@ -315,10 +317,10 @@ def evaluate_workspace(
         "hidden_total": hidden_total,
         "hidden_ratio": hidden_ratio,
         "hidden_checked": run_hidden,
-        "success": run_hidden and hidden_total > 0 and hidden_passed == hidden_total,
-        "stdout": public_results.get("stdout", ""),
-        "stderr": public_results.get("stderr", ""),
-        "exit_code": int(public_results.get("exit_code", 0)),
+        "success": run_hidden and (hidden_total == 0 or hidden_passed == hidden_total),
+        "stdout": active_results.get("stdout", ""),
+        "stderr": active_results.get("stderr", ""),
+        "exit_code": int(active_results.get("exit_code", 0)),
         "failing_tests": failing_tests[:5],
         "failure_details": failure_details[:5],
         "quality_score": float(quality["score"]),

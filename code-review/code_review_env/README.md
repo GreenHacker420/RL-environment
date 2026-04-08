@@ -13,156 +13,172 @@ tags:
 
 # CodeReviewEnv
 
-CodeReviewEnv is an OpenEnv environment for iterative code review and debugging.
-An agent receives a buggy pull request, submits revised code, gets automated test
-feedback, and improves the solution over multiple attempts.
+CodeReviewEnv is a guided Python coding workspace built with OpenEnv. An agent receives a small local workspace, edits files, runs deterministic tests, and learns from structured execution feedback over multiple steps.
 
-The environment is designed to model a real software engineering workflow rather
-than a one-shot code quiz. The main signal comes from execution-based grading:
-submitted code is parsed and tested in a subprocess, and reward reflects real
-progress on the task.
+The environment is closer to a task-scaffolded coding workspace than to a
+static code quiz. Code review remains one supported task family, but the core
+benchmark is broader: implementation, repair, and integration work inside small
+Python workspaces.
 
-## Motivation
+## Why This Environment Exists
 
-Most code benchmarks are single-turn. Real debugging is not.
+Most code benchmarks are single-turn. Real coding work is not.
 
-In practice, engineers:
+Engineers usually:
 
-1. inspect buggy code
+1. inspect files
 2. make a change
 3. run tests
 4. inspect failures
-5. refine the fix
+5. refine the solution
 
-CodeReviewEnv turns that loop into an RL environment with shaped rewards and
-clean episode boundaries.
+CodeReviewEnv turns that loop into an RL environment with explicit workspace
+tools, deterministic grading, and trajectory-level reward.
 
 ## Judging Criteria Mapping
 
 ### Real-world utility
 
-- Domain is real: code review and debugging.
-- Tasks are framed as pull requests with reviewer/developer context.
-- Reward is tied to execution outcomes, not just answer matching.
+- The task domain is real software work: implementing functions, repairing
+  regressions, and fixing multi-file integrations.
+- The agent operates on files and test feedback, not answer labels.
+- Reward is grounded in code execution and deterministic checks.
 
 ### Task and grader quality
 
-- 12 tasks across easy, medium, and hard tiers.
-- Grading is deterministic and execution-based.
-- Easy tasks cover single-bug fixes.
-- Medium tasks cover multi-bug class repair.
-- Hard tasks cover multi-file integration failures.
+- The benchmark contains easy, medium, and hard task templates.
+- Every task has public tests, hidden tests, and deterministic grading.
+- Reward is always in `[0.0, 1.0]`.
+- Tasks span implementation, repair, and integration instead of only one bug
+  pattern.
 
 ### Environment design
 
-- Multi-step interaction instead of one-shot scoring.
-- Partial reward is returned before task completion.
-- Episodes terminate when solved or attempts run out.
-- State tracks best progress over the trajectory.
+- Episodes are multi-step.
+- `read_files`, `update_files`, and `run_tests` are explicit actions.
+- Reward is shaped mainly on `run_tests`, with intermediate progress signal.
+- Episodes terminate on success, test-budget exhaustion, or step-budget exhaustion.
 
 ### Code quality and spec compliance
 
-- Typed OpenEnv models for action, observation, and state.
-- `openenv.yaml` is included.
-- Dockerfile is provided at the repo root.
-- The environment passes `openenv validate`.
+- Typed OpenEnv models are defined in [models.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/models.py).
+- The environment implements `reset()`, `step()`, and `state()`.
+- [openenv.yaml](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/openenv.yaml) is included.
+- The repo ships with Docker, a baseline inference script, and a smoke test.
 
 ### Creativity and novelty
 
-- The benchmark is closer to an engineering debugging loop than a static coding quiz.
-- It combines PR-style context, iterative repair, and execution-based reward.
+- This is not a freeform REPL and not a static answer-matching benchmark.
+- It combines workspace inspection, controlled editing, and structured testing
+  into a compact RL loop suitable for training or evaluation.
 
 ## Environment Summary
 
-- Domain: code review / debugging
+- Domain: guided Python coding workspace
 - API: OpenEnv `reset()` / `step()` / `state()`
-- Interaction style: iterative, multi-step
+- Interaction style: multi-step, test-driven
 - Evaluation: deterministic execution-based grading
 - Deployment target: Hugging Face Space with Docker
 - Client mode: WebSocket
 
-## Task Set
+## Task Families
 
-The benchmark contains 12 seed tasks across 3 difficulty tiers.
+CodeReviewEnv currently ships with local template families that generate
+deterministic workspace variants from a task id and seed.
 
-| Difficulty | Count | Shape | Examples |
-| --- | ---: | --- | --- |
-| Easy | 5 | single Python function, one bug | off-by-one, missing return, wrong operator |
-| Medium | 4 | one Python class, multiple interacting bugs | `Stack`, `BankAccount`, `LinkedList`, `FileProcessor` |
-| Hard | 3 | two short Python modules with integration failures | `calculator + validator`, `parser + formatter`, `auth + session` |
+| Difficulty | Families | Shape |
+| --- | --- | --- |
+| Easy | implementation, repair | one file, one function, 1-2 public tests |
+| Medium | implementation, repair | one module or class, 2-3 public tests |
+| Hard | integration, repair | 2-3 files, integration behavior, 3 public tests |
 
-Each task includes:
+Current seed templates:
 
-- PR-style title and description
-- developer note or reviewer context
-- buggy code
-- public tests for intermediate feedback
-- hidden tests for final validation
-- deterministic attempt limit
+- `easy_implementation_discount`
+- `easy_repair_slugify`
+- `medium_implementation_inventory`
+- `medium_repair_budget`
+- `hard_integration_orders`
+- `hard_repair_auth`
 
-Attempt limits:
+Each episode is generated locally from:
 
-- easy: 3
-- medium: 4
-- hard: 4
+- a deterministic workspace
+- editable file constraints
+- public tests
+- hidden tests
+- a task brief
+- a fixed step budget and test budget
 
-## Core Interaction Loop
+## Core Loop
 
 Each episode works like this:
 
-1. `reset()` returns PR context, buggy code, and public test descriptions.
-2. The agent submits revised code with `step(action)`.
-3. The environment parses the submission and executes public tests.
-4. The agent receives:
+1. `reset()` returns a task brief and the initial workspace snapshot.
+2. The agent may inspect files with `read_files`.
+3. The agent edits workspace files with `update_files`.
+4. The agent calls `run_tests`.
+5. The environment returns:
+   - public test progress
+   - structured failure details
+   - stdout, stderr, and exit code
    - reward
-   - tests passed / total
-   - failure summary
-   - updated prompt containing the current code
-5. The episode ends when:
-   - all public and hidden tests pass, or
-   - the attempt limit is reached
+6. The loop continues until hidden tests pass or the budgets are exhausted.
 
-This gives useful trajectory-level learning signal instead of a single binary score.
+This is intended to teach agents to improve code through execution feedback, not
+to guess a stored answer.
 
 ## Reward Design
 
-Reward is always in `[0.0, 1.0]`.
+Reward is issued mainly on `run_tests`.
 
-Current scoring is based on:
+- `read_files`: `0.0`
+- `update_files`: `0.0`
+- `run_tests`: shaped reward in `[0.0, 1.0]`
 
-- `0.75 * test_signal`
-- `0.15 * syntax_and_import_validity`
-- `0.10 * improvement_over_previous_best_public_score`
+Current `run_tests` formula:
 
-Notes:
+- `0.80 * public_test_pass_ratio`
+- `0.10 * improvement_over_previous_best_public_ratio`
+- `0.10 * deterministic_quality_score`
 
-- Public tests drive the intermediate reward.
-- Hidden tests are used once public tests pass to decide final success.
-- Invalid Python receives `0.0`.
-- Partial progress receives partial reward.
+The deterministic quality score checks:
 
-This makes the reward function dense enough for RL while still being grounded in
-actual code behavior.
+- editable files parse as valid Python
+- no `eval()` or `exec()`
+- no wildcard imports
+- no top-level debug `print()` calls
+
+Hidden tests are checked once public tests pass or on the final allowed test
+run. Success requires hidden tests to pass.
+
+Budgets:
+
+- `max_test_runs`: easy `3`, medium `4`, hard `4`
+- `max_steps`: easy `8`, medium `12`, hard `14`
 
 ## Action Space
 
-The action model is intentionally simple.
+`ReviewAction` exposes explicit workspace tools:
 
-`ReviewAction`:
-
-- `fixed_code`
-  full revised code submission
-  use a string for easy and medium tasks
-  use a filename-to-code map for hard tasks
+- `action_type`
+  one of `read_files`, `update_files`, `run_tests`
+- `paths`
+  file paths to read when using `read_files`
+- `files`
+  path-to-full-content map when using `update_files`
 - `summary`
-  optional short explanation of the attempted fix
+  optional short note describing the change
 
 Example:
 
 ```python
 ReviewAction(
-    fixed_code="def square(n):\n    return n * n",
-    summary="Return the computed value.",
+    action_type="update_files",
+    files={
+        "pricing.py": "def apply_discount(subtotal, has_coupon):\n    ...\n",
+    },
+    summary="Implement the coupon rule and round to 2 decimals.",
 )
 ```
 
@@ -170,18 +186,25 @@ ReviewAction(
 
 `ReviewObservation` contains:
 
-- `prompt`
-  PR context, current code, and public test descriptions
+- `task_brief`
+- `workspace_files`
+- `stdout`
+- `stderr`
+- `exit_code`
 - `feedback`
-  latest execution feedback
-- `reward`
-- `done`
+- `failing_tests`
+- `failure_details`
 - `task_id`
 - `difficulty`
-- `attempt`
-- `max_attempts`
 - `tests_passed`
 - `tests_total`
+- `test_runs_used`
+- `max_test_runs`
+- `reward`
+- `done`
+
+Observations are structured so an agent can use them programmatically rather
+than relying only on prose.
 
 ## State Space
 
@@ -190,52 +213,55 @@ ReviewAction(
 - `episode_id`
 - `step_count`
 - `difficulty`
-- `current_score`
 - `best_score`
-- `task_id`
-- `max_attempts`
 - `tests_passed`
 - `tests_total`
+- `test_runs_used`
+- `max_test_runs`
+- `task_id`
+- `workspace_manifest`
 
 ## Repository Layout
 
-- `tasks.py`
-  task bank, PR metadata, public tests, hidden tests
-- `graders.py`
-  execution-based evaluation logic
-- `models.py`
+- [tasks.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/tasks.py)
+  task descriptors, seeded workspace generation, and task metadata
+- [graders.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/graders.py)
+  deterministic execution harness and reward computation
+- [models.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/models.py)
   typed action, observation, and state models
-- `server/environment.py`
-  main OpenEnv environment loop
-- `client.py`
+- [server/environment.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/server/environment.py)
+  main environment loop
+- [client.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/client.py)
   WebSocket client
-- `trl_env.py`
-  TRL tool environment wrapper
-- `inference.py`
+- [trl_env.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/trl_env.py)
+  TRL tool wrapper
+- [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)
   reproducible baseline runner
-- `smoke_test.py`
+- [smoke_test.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/smoke_test.py)
   local sanity test
 
 ## Built-in UI and Routes
 
-The server exposes the default OpenEnv web UI:
+The server exposes the default OpenEnv UI and API routes:
 
 - `/web/` interactive Gradio UI
 - `/docs` Swagger UI
 - `/redoc` ReDoc
 - `/health` health check
+- `/schema` environment schema
 - `/reset` start an episode
-- `/step` submit a revision
-- `/state` inspect current state
-- `/ws` WebSocket client endpoint
+- `/step` send an action
+- `/state` inspect state
+- `/ws` WebSocket endpoint
 
 `/` redirects to `/web/` when the web interface is enabled.
 
 ## Stateful API Note
 
 - `/reset` is easy to test over plain HTTP.
-- `/step` is stateful and should be tested through the built-in `/web/` UI or the Python/WebSocket client.
-- Plain one-off `curl` calls to `/step` are not a reliable manual test because they do not preserve environment session state.
+- `/step` is stateful and should be tested via `/web/` or the Python/WebSocket client.
+- One-off `curl` calls to `/step` are not a reliable manual test because they do
+  not preserve session state across the episode.
 
 ## Run Locally
 
@@ -276,9 +302,10 @@ python smoke_test.py
 The smoke test:
 
 1. resets to a known easy task
-2. submits one incorrect revision and gets partial reward
-3. submits a correct revision and finishes the episode
-4. prints final state
+2. applies an intentionally incomplete update
+3. runs tests and checks partial reward
+4. applies a corrected update
+5. runs tests again and checks the solved state
 
 ## Python Client Example
 
@@ -289,18 +316,63 @@ client = CodeReviewEnv(base_url="http://localhost:7860").sync()
 
 with client:
     reset_result = client.reset(difficulty="easy")
-    print(reset_result.observation.prompt)
+    observation = reset_result.observation
+    print(observation.task_brief)
+    print(observation.workspace_files)
 
-    result = client.step(
+    client.step(
         ReviewAction(
-            fixed_code="def square(n):\n    return n * n",
-            summary="Return the computed value.",
+            action_type="update_files",
+            files={
+                "pricing.py": "def apply_discount(subtotal, has_coupon):\n    return round(subtotal, 2)\n",
+            },
+            summary="First implementation pass.",
         )
     )
-    print(result.reward)
-    print(result.done)
-    print(result.observation.feedback)
+
+    test_result = client.step(ReviewAction(action_type="run_tests"))
+    print(test_result.reward)
+    print(test_result.observation.feedback)
 ```
+
+## TRL Tool Wrapper
+
+[trl_env.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/trl_env.py) exposes exactly two tool methods for `GRPOTrainer(environment_factory=CodeReviewToolEnv)`:
+
+- `update_files(files: dict[str, str], summary: str = "")`
+- `run_tests()`
+
+The initial workspace snapshot is included in `reset()`, so `read_files` is not
+required in the TRL wrapper.
+
+## Baseline Inference
+
+[inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py) is submission-compliant:
+
+- root-level file
+- OpenAI Python client only
+- reads `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN`
+- emits exact `[START]`, `[STEP]`, `[END]` lines
+- writes `results.json`
+
+Run:
+
+```bash
+export HF_TOKEN=...
+export API_BASE_URL=https://router.huggingface.co/v1
+export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
+python inference.py --url http://localhost:7860 --episodes 6 --seed 42
+```
+
+## Baseline Scores
+
+Fill these in after the final run:
+
+- mean score: pending
+- std score: pending
+- easy mean: pending
+- medium mean: pending
+- hard mean: pending
 
 ## Manual API Testing
 
@@ -318,108 +390,19 @@ State:
 curl http://localhost:7860/state
 ```
 
-For `step`, prefer the Python client or `/web/`.
-
-## TRL Integration
-
-`trl_env.py` provides `CodeReviewToolEnv` for TRL `environment_factory`.
-
-Exposed tool methods:
-
-- `describe_fix`
-- `submit_fix`
-
-That wrapper keeps the interface narrow and tool-friendly for multi-turn training.
-
-## Baseline Inference
-
-`inference.py` runs a reproducible baseline using the OpenAI client and emits the required structured logs:
-
-- `[START]`
-- `[STEP]`
-- `[END]`
-
-Required environment variables:
-
-- `HF_TOKEN`
-- `API_BASE_URL`
-- `MODEL_NAME`
-
-`API_BASE_URL` and `MODEL_NAME` include defaults in the script.
-`HF_TOKEN` is mandatory.
-
-Example:
-
-```bash
-export HF_TOKEN=your_token
-export API_BASE_URL=https://router.huggingface.co/v1
-export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
-python inference.py --url http://localhost:7860 --episodes 12 --seed 42
-```
-
-The script writes `results.json` with:
-
-- `mean_score`
-- `std_score`
-- per-difficulty breakdown
-- episode-level details
-
 ## Operator Checklist
 
 Before submission:
 
-```bash
-openenv validate
-python smoke_test.py
-docker build .
-```
-
-Then:
-
-1. run `python inference.py --url <env-url> --episodes 12 --seed 42`
-2. confirm `results.json` is created
-3. copy real baseline numbers into the README
-4. confirm the Hugging Face Space is in `Running`
-5. stop unnecessary Spaces before submission
-
-Recommended endpoint checks:
-
-```bash
-curl http://localhost:7860/health
-curl -X POST http://localhost:7860/reset -H "Content-Type: application/json" -d '{}'
-curl https://greenhacker-code-review-env.hf.space/health
-curl -X POST https://greenhacker-code-review-env.hf.space/reset \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-## Hugging Face Space
-
-The project is configured as a Docker Space and exposes the OpenEnv UI at `/web/`.
-
-Once deployed, verify:
-
-- `/health` returns `200`
-- `/reset` returns an observation
-- `/schema` shows the `fixed_code` + `summary` action model
-- `/web/` loads
-- `/docs` loads
+1. run `openenv validate`
+2. run `python -m compileall .`
+3. run `python smoke_test.py`
+4. run `docker build .`
+5. run the final baseline inference
+6. verify the Hugging Face Space is `Running`
+7. stop unnecessary Spaces before submitting
 
 ## Current Limitations
 
-- Tasks are still from a fixed curated bank, not generated variants.
-- Hidden tests are deterministic but not yet templated per seed.
-- The benchmark currently favors full-file submissions over patch application.
-
-These are acceptable for Round 1. The next improvement after submission would be
-templated task variants with the same execution-based grading loop.
-
-## Baseline Scores
-
-Run `inference.py` and paste the resulting aggregate numbers here before final submission.
-
-- Mean score: pending
-- Std score: pending
-- Easy: pending
-- Medium: pending
-- Hard: pending
+- Task families are local templates rather than external benchmark integrations.
+- The workspace is guided and bounded by editable files; it is not a full shell or arbitrary REPL.
