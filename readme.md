@@ -1,54 +1,65 @@
-# OpenEnv
+# OpenEnv Workspace
 
-This repo contains a production-style OpenEnv environment for drug interaction reasoning.
+This repository now centers on the hackathon submission in
+[code-review/code_review_env](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env).
 
-## Run Locally
+## Main Project
 
-1. Enter the project:
+- [code-review/code_review_env/README.md](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/README.md)
+  full environment documentation
+- [code-review/code_review_env/openenv.yaml](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/openenv.yaml)
+  OpenEnv metadata
+- [code-review/code_review_env/inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)
+  baseline runner
+- [code-review/code_review_env/Dockerfile](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/Dockerfile)
+  deployment image used for local validation and HF Spaces
 
-```bash
-cd drug_interaction_env
+## What It Contains
+
+The submission project is a guided Python coding workspace built with OpenEnv.
+An agent:
+
+1. inspects a workspace manifest
+2. reads files explicitly
+3. updates code
+4. runs lint and tests
+5. improves code over multiple steps using structured feedback
+
+## Repo Layout
+
+```text
+openenv/
+├── code-review/
+│   └── code_review_env/
+│       └── ... hackathon submission ...
+├── docs/
+│   └── ... local reference notes ...
+└── readme.md
 ```
 
-2. Install dependencies in your active environment:
+## Quick Start
 
 ```bash
-pip install -e ".[dev,server]"
+cd code-review/code_review_env
+openenv validate
+python server/app.py
 ```
 
-3. Create a `.env` file for OpenRouter:
+Then open:
+
+- `http://localhost:7860/web/`
+- `http://localhost:7860/docs`
+
+## Validation
+
+From the submission project root:
 
 ```bash
-cat > .env <<'EOF'
-OPENAI_API_KEY=your_openrouter_key
-OPENAI_BASE_URL=https://openrouter.ai/api/v1
-OPENROUTER_HTTP_REFERER=https://your-site.example
-OPENROUTER_X_TITLE=Drug-Interaction-Env
-EOF
+python smoke_test.py
+docker build -t code-review-env .
+python inference.py --url http://localhost:7860 --episodes 27 --seed 42
 ```
 
-4. Start the environment server in one terminal:
+For the full submission checklist and benchmark details, use the project README:
 
-```bash
-uvicorn server.app:app --host 0.0.0.0 --port 8000
-```
-
-5. Run the benchmark in another terminal:
-
-```bash
-python inference.py --url http://localhost:8000 --episodes 20 --seed 42
-```
-
-6. Run tests:
-
-```bash
-pytest
-```
-
-## Notes
-
-- The default model is `nvidia/nemotron-3-super-120b-a12b:free`.
-- Free OpenRouter endpoints are logged and should not be used for sensitive or production traffic.
-- Results are written to `drug_interaction_env/results.json`.
-
-Detailed environment docs are in [drug_interaction_env/README.md](/Users/harsh/Desktop/gitRepos/openenv/drug_interaction_env/README.md).
+- [code-review/code_review_env/README.md](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/README.md)
