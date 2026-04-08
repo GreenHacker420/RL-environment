@@ -791,7 +791,7 @@ def _build_hard_repository_tasks(seed: int | None) -> dict[str, Any]:
             "def add_task(conn, title, done=False):",
             "    conn.execute(",
             "        'INSERT INTO tasks(title, done) VALUES (?, ?)',",
-            "        (title, int(not done)),",
+            "        (title, int(done)),",
             "    )",
             "    conn.commit()",
             "",
