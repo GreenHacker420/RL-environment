@@ -16,6 +16,9 @@ TASKS: list[dict[str, str]] = [
     {"id": "medium_repair_budget", "difficulty": "medium", "family": "repair"},
     {"id": "hard_integration_orders", "difficulty": "hard", "family": "integration"},
     {"id": "hard_repair_auth", "difficulty": "hard", "family": "repair"},
+    {"id": "hard_integration_config", "difficulty": "hard", "family": "integration"},
+    {"id": "hard_pipeline_billing", "difficulty": "hard", "family": "integration"},
+    {"id": "hard_repository_tasks", "difficulty": "hard", "family": "integration"},
 ]
 
 
@@ -46,13 +49,13 @@ def get_task_by_id(task_id: str) -> dict[str, str]:
 
 
 def build_workspace_summary(files: dict[str, str]) -> list[str]:
-    return [f"{path} ({len(content.splitlines())} lines)" for path, content in files.items()]
+    return [f"{path} ({len(files[path].splitlines())} lines)" for path in sorted(files)]
 
 
 def render_workspace(files: dict[str, str]) -> str:
     sections = []
-    for path, content in files.items():
-        sections.append(f"# {path}\n{content}")
+    for path in sorted(files):
+        sections.append(f"# {path}\n{files[path]}")
     return "\n\n".join(sections)
 
 
@@ -544,6 +547,331 @@ def _build_hard_repair_auth(seed: int | None) -> dict[str, Any]:
     }
 
 
+def _build_hard_integration_config(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("hard_integration_config", seed)
+    defaults_file = rng.choice(["defaults.py", "base_config.py"])
+    parser_file = rng.choice(["parser.py", "reader.py"])
+    coerce_file = rng.choice(["coerce.py", "casting.py"])
+    service_file = rng.choice(["service.py", "settings.py"])
+    defaults_module = defaults_file[:-3]
+    parser_module = parser_file[:-3]
+    coerce_module = coerce_file[:-3]
+    service_module = service_file[:-3]
+
+    workspace_files = {
+        defaults_file: _code(
+            "DEFAULTS = {",
+            "    'retries': 1,",
+            "    'timeout': 30,",
+            "    'feature_enabled': False,",
+            "    'service_name': 'core',",
+            "}",
+        ),
+        parser_file: _code(
+            "def parse_config(text):",
+            "    parsed = {}",
+            "    for raw_line in text.splitlines():",
+            "        line = raw_line.strip()",
+            "        if not line or line.startswith('#'):",
+            "            continue",
+            "        key, value = line.split('=', 1)",
+            "        parsed[key.strip()] = value.strip()",
+            "    return parsed",
+        ),
+        coerce_file: _code(
+            "def coerce_value(key, value):",
+            "    if key in {'retries', 'timeout'}:",
+            "        return int(value)",
+            "    if key == 'feature_enabled':",
+            "        return value == 'True'",
+            "    return value",
+        ),
+        service_file: _code(
+            f"from {coerce_module} import coerce_value",
+            f"from {defaults_module} import DEFAULTS",
+            f"from {parser_module} import parse_config",
+            "",
+            "def build_settings(text):",
+            "    parsed = parse_config(text)",
+            "    settings = parsed.copy()",
+            "    for key, value in parsed.items():",
+            "        settings[key] = coerce_value(key, value)",
+            "    return settings",
+        ),
+    }
+
+    return {
+        "id": "hard_integration_config",
+        "difficulty": "hard",
+        "family": "integration",
+        "title": "Repair layered config loader",
+        "task_brief": (
+            f"Repair the config loading flow across `{defaults_file}`, `{parser_file}`, `{coerce_file}`, and "
+            f"`{service_file}`. The loader should merge parsed overrides over defaults, preserve unspecified "
+            "defaults, and coerce integer and boolean values correctly."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [defaults_file, parser_file, coerce_file, service_file],
+        "public_tests": [
+            _function_case(
+                "typed_override_merge",
+                service_module,
+                "build_settings",
+                ["retries=3\nfeature_enabled=true"],
+                {
+                    "retries": 3,
+                    "timeout": 30,
+                    "feature_enabled": True,
+                    "service_name": "core",
+                },
+            ),
+            _function_case(
+                "service_override",
+                service_module,
+                "build_settings",
+                ["timeout=10\nservice_name=jobs"],
+                {
+                    "retries": 1,
+                    "timeout": 10,
+                    "feature_enabled": False,
+                    "service_name": "jobs",
+                },
+            ),
+        ],
+        "hidden_tests": [
+            _function_case(
+                "ignore_comments_and_spaces",
+                service_module,
+                "build_settings",
+                ["# comment\n  feature_enabled = false  \n retries = 2"],
+                {
+                    "retries": 2,
+                    "timeout": 30,
+                    "feature_enabled": False,
+                    "service_name": "core",
+                },
+            ),
+            _function_case(
+                "preserve_unknown_keys",
+                service_module,
+                "build_settings",
+                ["timeout=45\nregion=apac"],
+                {
+                    "retries": 1,
+                    "timeout": 45,
+                    "feature_enabled": False,
+                    "service_name": "core",
+                    "region": "apac",
+                },
+            ),
+        ],
+    }
+
+
+def _build_hard_pipeline_billing(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("hard_pipeline_billing", seed)
+    normalize_file = rng.choice(["normalize.py", "cleaning.py"])
+    filters_file = rng.choice(["filters.py", "rules.py"])
+    report_file = rng.choice(["report.py", "totals.py"])
+    pipeline_file = rng.choice(["pipeline.py", "billing_pipeline.py"])
+    normalize_module = normalize_file[:-3]
+    filters_module = filters_file[:-3]
+    report_module = report_file[:-3]
+    pipeline_module = pipeline_file[:-3]
+
+    workspace_files = {
+        normalize_file: _code(
+            "def normalize_record(record):",
+            "    return {",
+            "        'name': record['name'].strip(),",
+            "        'status': record['status'],",
+            "        'amount': float(record['amount']) if record['amount'] else 0.0,",
+            "    }",
+        ),
+        filters_file: _code(
+            "def is_billable(record):",
+            "    return record['status'] == 'active' and record['amount'] > 0",
+        ),
+        report_file: _code(
+            "def summarize_billable(records):",
+            "    total = sum(item['amount'] for item in records)",
+            "    return {'billable_count': len(records), 'total_amount': int(total)}",
+        ),
+        pipeline_file: _code(
+            f"from {filters_module} import is_billable",
+            f"from {normalize_module} import normalize_record",
+            f"from {report_module} import summarize_billable",
+            "",
+            "def build_report(rows):",
+            "    cleaned = [normalize_record(row) for row in rows]",
+            "    billable = [row for row in cleaned if is_billable(row)]",
+            "    return summarize_billable(billable)",
+        ),
+    }
+
+    return {
+        "id": "hard_pipeline_billing",
+        "difficulty": "hard",
+        "family": "integration",
+        "title": "Repair billing cleanup pipeline",
+        "task_brief": (
+            f"Repair the billing pipeline across `{normalize_file}`, `{filters_file}`, `{report_file}`, and "
+            f"`{pipeline_file}`. Records must be normalized before filtering, active statuses should be trimmed "
+            "and lowercased, empty amounts should become 0.0, and the final report should preserve decimal totals."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [normalize_file, filters_file, report_file, pipeline_file],
+        "public_tests": [
+            _function_case(
+                "normalized_active_rows",
+                pipeline_module,
+                "build_report",
+                [[
+                    {"name": " Alpha ", "status": " ACTIVE ", "amount": "12.50"},
+                    {"name": "Beta", "status": "inactive", "amount": "99.00"},
+                    {"name": "Gamma", "status": "active", "amount": "7.25"},
+                ]],
+                {"billable_count": 2, "total_amount": 19.75},
+            ),
+            _function_case(
+                "empty_amount_filtered",
+                pipeline_module,
+                "build_report",
+                [[
+                    {"name": "Alpha", "status": "active", "amount": ""},
+                    {"name": "Beta", "status": "active", "amount": "4.00"},
+                ]],
+                {"billable_count": 1, "total_amount": 4.0},
+            ),
+        ],
+        "hidden_tests": [
+            _function_case(
+                "ignore_negative_billable",
+                pipeline_module,
+                "build_report",
+                [[
+                    {"name": "Refund", "status": "active", "amount": "-2.00"},
+                    {"name": "Work", "status": " active", "amount": "3.50"},
+                ]],
+                {"billable_count": 1, "total_amount": 3.5},
+            ),
+            _function_case(
+                "all_inactive",
+                pipeline_module,
+                "build_report",
+                [[
+                    {"name": "Dormant", "status": "inactive", "amount": "6.00"},
+                ]],
+                {"billable_count": 0, "total_amount": 0.0},
+            ),
+        ],
+    }
+
+
+def _build_hard_repository_tasks(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("hard_repository_tasks", seed)
+    schema_file = rng.choice(["schema.py", "database.py"])
+    repo_file = rng.choice(["repository.py", "repo.py"])
+    service_file = rng.choice(["service.py", "dashboard.py"])
+    schema_module = schema_file[:-3]
+    repo_module = repo_file[:-3]
+    service_module = service_file[:-3]
+
+    workspace_files = {
+        schema_file: _code(
+            "import sqlite3",
+            "",
+            "def build_connection():",
+            "    conn = sqlite3.connect(':memory:')",
+            "    conn.row_factory = sqlite3.Row",
+            "    conn.execute('CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)')",
+            "    return conn",
+        ),
+        repo_file: _code(
+            "def add_task(conn, title, done=False):",
+            "    conn.execute(",
+            "        'INSERT INTO tasks(title, done) VALUES (?, ?)',",
+            "        (title, int(not done)),",
+            "    )",
+            "    conn.commit()",
+            "",
+            "def open_titles(conn):",
+            "    rows = conn.execute(",
+            "        'SELECT title FROM tasks WHERE done = 1 ORDER BY id'",
+            "    ).fetchall()",
+            "    return [row['title'] for row in rows]",
+        ),
+        service_file: _code(
+            f"from {repo_module} import add_task, open_titles",
+            f"from {schema_module} import build_connection",
+            "",
+            "def snapshot_open_titles(entries):",
+            "    conn = build_connection()",
+            "    for entry in entries:",
+            "        add_task(conn, entry['title'], entry.get('done', False))",
+            "    return open_titles(conn)",
+        ),
+    }
+
+    return {
+        "id": "hard_repository_tasks",
+        "difficulty": "hard",
+        "family": "integration",
+        "title": "Repair SQLite task repository flow",
+        "task_brief": (
+            f"Repair the repository workflow across `{schema_file}`, `{repo_file}`, and `{service_file}`. "
+            "Open tasks should remain open by default, done tasks should be excluded from dashboard results, "
+            "and result ordering should follow insertion order."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [schema_file, repo_file, service_file],
+        "public_tests": [
+            _function_case(
+                "mixed_entries",
+                service_module,
+                "snapshot_open_titles",
+                [[
+                    {"title": "Ship release", "done": False},
+                    {"title": "Archive notes", "done": True},
+                    {"title": "Email users", "done": False},
+                ]],
+                ["Ship release", "Email users"],
+            ),
+            _function_case(
+                "defaults_to_open",
+                service_module,
+                "snapshot_open_titles",
+                [[
+                    {"title": "First"},
+                    {"title": "Second"},
+                ]],
+                ["First", "Second"],
+            ),
+        ],
+        "hidden_tests": [
+            _function_case(
+                "empty_entries",
+                service_module,
+                "snapshot_open_titles",
+                [[]],
+                [],
+            ),
+            _function_case(
+                "preserve_order_with_done_filter",
+                service_module,
+                "snapshot_open_titles",
+                [[
+                    {"title": "A", "done": False},
+                    {"title": "B", "done": False},
+                    {"title": "C", "done": True},
+                    {"title": "D", "done": False},
+                ]],
+                ["A", "B", "D"],
+            ),
+        ],
+    }
+
+
 BUILDERS = {
     "easy_implementation_discount": _build_easy_implementation_discount,
     "easy_repair_slugify": _build_easy_repair_slugify,
@@ -551,6 +879,9 @@ BUILDERS = {
     "medium_repair_budget": _build_medium_repair_budget,
     "hard_integration_orders": _build_hard_integration_orders,
     "hard_repair_auth": _build_hard_repair_auth,
+    "hard_integration_config": _build_hard_integration_config,
+    "hard_pipeline_billing": _build_hard_pipeline_billing,
+    "hard_repository_tasks": _build_hard_repository_tasks,
 }
 
 

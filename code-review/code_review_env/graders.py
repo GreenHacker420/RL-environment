@@ -200,6 +200,62 @@ def quality_report(task: dict[str, Any], workspace_files: dict[str, str]) -> dic
     return {"score": sum(file_scores) / len(file_scores), "messages": messages}
 
 
+def run_workspace_lint(
+    workspace_files: dict[str, str],
+    editable_files: list[str] | None = None,
+) -> dict[str, Any]:
+    selected_files = editable_files or list(workspace_files)
+    quality = quality_report({"editable_files": selected_files}, workspace_files)
+    issues = list(quality["messages"])
+    stdout_parts: list[str] = []
+    stderr = ""
+    exit_code = 0 if not issues else 1
+
+    with tempfile.TemporaryDirectory(prefix="code_review_env_lint_") as temp_dir:
+        workdir = Path(temp_dir)
+        _write_workspace(workdir, workspace_files)
+        if selected_files:
+            try:
+                completed = subprocess.run(
+                    ["ruff", "check", "--output-format", "concise", *selected_files],
+                    cwd=workdir,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                )
+            except FileNotFoundError:
+                stdout_parts.append("ruff unavailable; used built-in lint checks only.")
+            except subprocess.TimeoutExpired:
+                issues.append("lint timeout after 5 seconds")
+                stderr = "ruff timeout"
+                exit_code = 1
+            else:
+                raw_stdout = completed.stdout.strip()
+                stderr = completed.stderr[:2000]
+                if raw_stdout:
+                    stdout_parts.append(raw_stdout[:2000])
+                    for line in raw_stdout.splitlines():
+                        stripped = line.strip()
+                        if (
+                            stripped
+                            and stripped not in issues
+                            and stripped != "All checks passed!"
+                            and "Found " not in stripped
+                        ):
+                            issues.append(stripped)
+                exit_code = max(exit_code, 0 if completed.returncode == 0 else 1)
+
+    unique_issues = list(dict.fromkeys(issues))
+    return {
+        "clean": len(unique_issues) == 0,
+        "issues": unique_issues[:8],
+        "stdout": "\n".join(part for part in stdout_parts if part)[:2000],
+        "stderr": stderr,
+        "exit_code": exit_code,
+    }
+
+
 def run_workspace_tests(
     workspace_files: dict[str, str],
     tests: list[dict[str, Any]],

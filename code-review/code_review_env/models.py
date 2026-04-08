@@ -14,7 +14,7 @@ ActionType = str
 class ReviewAction(Action):
     action_type: ActionType = Field(
         default="read_files",
-        description="Workspace action type. One of read_files, update_files, or run_tests.",
+        description="Workspace action type. One of read_files, update_files, run_lint, or run_tests.",
     )
     paths: list[str] = Field(
         default_factory=list,
@@ -56,10 +56,18 @@ class ReviewObservation(Observation):
         default_factory=dict,
         description="Visible workspace files returned by the environment.",
     )
+    workspace_manifest: list[str] = Field(
+        default_factory=list,
+        description="Visible file list for the active workspace.",
+    )
     stdout: str = Field(default="", description="Structured stdout-like feedback from the last action.")
     stderr: str = Field(default="", description="Structured stderr-like feedback from the last action.")
     exit_code: int = Field(default=0, description="Exit code for the last action.")
     feedback: str = Field(default="", description="Compact human-readable summary of the last action result.")
+    lint_issues: list[str] = Field(
+        default_factory=list,
+        description="Lint issues from the last run_lint or run_tests action.",
+    )
     failing_tests: list[str] = Field(
         default_factory=list,
         description="Names of currently failing public or hidden tests from the last run_tests call.",
@@ -82,10 +90,12 @@ class ReviewObservation(Observation):
         reward: float = 0.0,
         task_brief: str = "",
         workspace_files: dict[str, str] | None = None,
+        workspace_manifest: list[str] | None = None,
         stdout: str = "",
         stderr: str = "",
         exit_code: int = 0,
         feedback: str = "",
+        lint_issues: list[str] | None = None,
         failing_tests: list[str] | None = None,
         failure_details: list[str] | None = None,
         task_id: str = "",
@@ -102,10 +112,12 @@ class ReviewObservation(Observation):
             reward=reward,
             task_brief=task_brief,
             workspace_files=workspace_files or {},
+            workspace_manifest=workspace_manifest or [],
             stdout=stdout,
             stderr=stderr,
             exit_code=exit_code,
             feedback=feedback,
+            lint_issues=lint_issues or [],
             failing_tests=failing_tests or [],
             failure_details=failure_details or [],
             task_id=task_id,

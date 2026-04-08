@@ -9,14 +9,14 @@ from uuid import uuid4
 from openenv.core.env_server.interfaces import Environment
 
 try:
-    from ..graders import evaluate_workspace, quality_report
+    from ..graders import evaluate_workspace, quality_report, run_workspace_lint
     from ..models import ReviewAction, ReviewObservation, ReviewState
     from ..tasks import build_task, build_workspace_summary, get_task_by_id, get_tasks_by_difficulty
 except ImportError:
     ROOT = Path(__file__).resolve().parents[1]
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    from graders import evaluate_workspace, quality_report
+    from graders import evaluate_workspace, quality_report, run_workspace_lint
     from models import ReviewAction, ReviewObservation, ReviewState
     from tasks import build_task, build_workspace_summary, get_task_by_id, get_tasks_by_difficulty
 
@@ -45,9 +45,11 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         self._done = False
         self._solved = False
         self._pending_penalty = 0.0
+        self._pending_bonus = 0.0
         self._changed_since_test = False
         self._last_test_signature = ""
         self._last_public_passed = 0
+        self._last_lint_issues: list[str] = []
         self._last_failing_tests: list[str] = []
         self._last_failure_details: list[str] = []
         self._state = ReviewState(
@@ -103,10 +105,12 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
             reward=reward,
             task_brief=self._task["task_brief"],
             workspace_files=workspace_files,
+            workspace_manifest=build_workspace_summary(self._workspace),
             stdout=stdout,
             stderr=stderr,
             exit_code=exit_code,
             feedback=feedback,
+            lint_issues=self._last_lint_issues,
             failing_tests=failing_tests or [],
             failure_details=failure_details or [],
             task_id=self._task["id"],
@@ -166,7 +170,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
             feedback = self._maybe_finish_for_step_budget("No file updates were provided.")
             return self._base_observation(
                 reward=0.0,
-                workspace_files=self._workspace_view(),
+                workspace_files={},
                 stderr="No files provided.",
                 exit_code=1,
                 feedback=feedback,
@@ -180,7 +184,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
             )
             return self._base_observation(
                 reward=0.0,
-                workspace_files=self._workspace_view(),
+                workspace_files={},
                 stderr=f"Non-editable files requested: {', '.join(invalid_paths)}",
                 exit_code=1,
                 feedback=feedback,
@@ -198,6 +202,8 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
             self._workspace[path] = proposed_files[path]
         if changed_paths:
             self._changed_since_test = True
+            self._pending_bonus = 0.0
+            self._last_lint_issues = []
         self._sync_state()
 
         validation_task = {"editable_files": list(proposed_files)}
@@ -211,11 +217,43 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         )
         return self._base_observation(
             reward=0.0,
-            workspace_files=self._workspace_view(),
+            workspace_files={path: self._workspace[path] for path in proposed_files if path in self._workspace},
             stdout=f"Updated files: {', '.join(proposed_files)}",
             exit_code=0,
             feedback=feedback,
             failure_details=notes,
+        )
+
+    def _handle_run_lint(self) -> ReviewObservation:
+        assert self._task is not None
+        current_signature = _workspace_signature(self._workspace)
+        if not self._changed_since_test and self._last_test_signature == current_signature:
+            self._pending_penalty = min(0.25, self._pending_penalty + 0.03)
+
+        lint_report = run_workspace_lint(
+            self._workspace,
+            editable_files=list(self._task["editable_files"]),
+        )
+        self._last_lint_issues = list(lint_report["issues"])
+
+        if lint_report["clean"]:
+            self._pending_bonus = min(0.05, self._pending_bonus + 0.03)
+            feedback = "Lint clean. The next test run gets a small workflow bonus."
+        else:
+            feedback = (
+                f"Lint reported {len(lint_report['issues'])} issue(s). "
+                "Fix them or accept the lower quality score on the next test run."
+            )
+
+        feedback = self._maybe_finish_for_step_budget(feedback)
+        return self._base_observation(
+            reward=0.0,
+            workspace_files={},
+            stdout=lint_report["stdout"],
+            stderr=lint_report["stderr"],
+            exit_code=int(lint_report["exit_code"]),
+            feedback=feedback,
+            failure_details=lint_report["issues"],
         )
 
     def _handle_run_tests(self) -> ReviewObservation:
@@ -240,6 +278,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
 
         self._state.test_runs_used = next_test_run
         self._last_public_passed = int(result["public_passed"])
+        self._last_lint_issues = list(dict.fromkeys(self._last_lint_issues + list(result["quality_messages"])))[:8]
         self._last_failing_tests = list(result["failing_tests"])
         self._last_failure_details = list(result["failure_details"])
 
@@ -253,7 +292,11 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         )
         efficiency_score = (remaining_step_ratio + remaining_test_ratio) / 2
         penalty_applied = self._pending_penalty
-        final_score = max(0.0, min(1.0, float(result["score"]) + (0.10 * efficiency_score) - penalty_applied))
+        bonus_applied = self._pending_bonus
+        final_score = max(
+            0.0,
+            min(1.0, float(result["score"]) + (0.10 * efficiency_score) + bonus_applied - penalty_applied),
+        )
 
         self._solved = bool(result["success"])
         self._state.best_score = max(self._state.best_score, final_score)
@@ -275,6 +318,9 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         penalty_text = ""
         if penalty_applied > 0:
             penalty_text = f" Penalty applied: -{penalty_applied:.2f} for inefficient or no-op behavior."
+        bonus_text = ""
+        if bonus_applied > 0:
+            bonus_text = f" Workflow bonus applied: +{bonus_applied:.2f} after a clean lint pass."
 
         if result["success"]:
             prefix = "Solved."
@@ -289,16 +335,17 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         feedback = self._maybe_finish_for_step_budget(
             f"{prefix} Test run {self._state.test_runs_used}/{self._task['max_test_runs']}. "
             f"Public tests {result['public_passed']}/{result['public_total']}.{hidden_text} "
-            f"{status} Reward components include hidden-test progress and efficiency.{penalty_text}{detail_text}"
+            f"{status} Reward components include hidden-test progress, efficiency, and quality.{bonus_text}{penalty_text}{detail_text}"
         )
 
         self._pending_penalty = 0.0
+        self._pending_bonus = 0.0
         self._changed_since_test = False
         self._last_test_signature = current_signature
 
         return self._base_observation(
             reward=final_score,
-            workspace_files=self._workspace_view(),
+            workspace_files={},
             stdout=result["stdout"],
             stderr=result["stderr"],
             exit_code=int(result["exit_code"]),
@@ -320,9 +367,11 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         self._done = False
         self._solved = False
         self._pending_penalty = 0.0
+        self._pending_bonus = 0.0
         self._changed_since_test = False
         self._last_test_signature = ""
         self._last_public_passed = 0
+        self._last_lint_issues = []
         self._last_failing_tests = []
         self._last_failure_details = []
         self._state = ReviewState(
@@ -341,10 +390,11 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
 
         return self._base_observation(
             reward=0.0,
-            workspace_files=self._workspace_view(),
+            workspace_files={},
             feedback=(
                 f"Workspace loaded. You have {self._task['max_steps']} total actions and "
-                f"{self._task['max_test_runs']} test runs. Read files, update editable files, then run tests."
+                f"{self._task['max_test_runs']} test runs. Start with read_files, then update editable files, "
+                "optionally run_lint, and finally run_tests."
             ),
         )
 
@@ -367,15 +417,17 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
             observation = self._handle_read_files(action)
         elif action_type == "update_files":
             observation = self._handle_update_files(action)
+        elif action_type == "run_lint":
+            observation = self._handle_run_lint()
         elif action_type == "run_tests":
             observation = self._handle_run_tests()
         else:
             feedback = self._maybe_finish_for_step_budget(
-                f"Unknown action_type `{action.action_type}`. Use read_files, update_files, or run_tests."
+                f"Unknown action_type `{action.action_type}`. Use read_files, update_files, run_lint, or run_tests."
             )
             observation = self._base_observation(
                 reward=0.0,
-                workspace_files=self._workspace_view(),
+                workspace_files={},
                 stderr=f"Unsupported action_type: {action.action_type}",
                 exit_code=1,
                 feedback=feedback,

@@ -27,6 +27,7 @@ class CodeReviewToolEnv:
     def __init__(self) -> None:
         self._client = CodeReviewEnvClient(base_url=ENV_URL).sync()
         self._client.connect()
+        self._workspace_cache: dict[str, str] = {}
         self.reward = 0.0
         self.done = False
 
@@ -34,12 +35,18 @@ class CodeReviewToolEnv:
         difficulty = kwargs.get("difficulty", "easy")
         task_id = kwargs.get("task_id")
         result = self._client.reset(difficulty=difficulty, task_id=task_id)
+        observation = result.observation
+        self._workspace_cache = {}
+        manifest_paths = [entry.split(" (", 1)[0] for entry in observation.workspace_manifest]
+        if manifest_paths:
+            read_result = self._client.step(ReviewAction(action_type="read_files", paths=manifest_paths))
+            observation = read_result.observation
+            self._workspace_cache.update(observation.workspace_files)
         self.reward = 0.0
         self.done = False
-        observation = result.observation
         return (
             f"{observation.task_brief}\n\n"
-            f"Workspace:\n{_render_workspace_block(observation.workspace_files)}\n\n"
+            f"Workspace:\n{_render_workspace_block(self._workspace_cache)}\n\n"
             f"Test runs available: {observation.test_runs_used}/{observation.max_test_runs}\n"
             f"Feedback: {observation.feedback}"
         )
@@ -67,9 +74,31 @@ class CodeReviewToolEnv:
         self.reward = float(result.reward or 0.0)
         self.done = result.done
         observation = result.observation
+        self._workspace_cache.update(observation.workspace_files)
         return (
             f"{observation.feedback}\n\n"
-            f"Workspace:\n{_render_workspace_block(observation.workspace_files)}"
+            f"Workspace:\n{_render_workspace_block(self._workspace_cache)}"
+        )
+
+    def run_lint(self) -> str:
+        """
+        Execute deterministic lint checks against the editable workspace files.
+
+        Args:
+            None.
+        """
+        if self.done:
+            raise ValueError("Episode complete.")
+
+        result = self._client.step(ReviewAction(action_type="run_lint"))
+        self.reward = float(result.reward or 0.0)
+        self.done = result.done
+        observation = result.observation
+        issues = "\n- ".join(observation.lint_issues) if observation.lint_issues else "None"
+        return (
+            f"{observation.feedback}\n"
+            f"Lint issues:\n- {issues}\n"
+            f"Exit code: {observation.exit_code}"
         )
 
     def run_tests(self) -> str:

@@ -86,16 +86,20 @@ def build_system_prompt() -> str:
 
 
 def build_user_prompt(observation: ReviewObservation) -> str:
+    loaded_files = render_workspace(observation.workspace_files) if observation.workspace_files else "No files loaded yet."
+    manifest_block = "\n".join(f"- {entry}" for entry in observation.workspace_manifest) or "None"
     failure_block = "None"
     if observation.failure_details:
         failure_block = "\n".join(f"- {detail}" for detail in observation.failure_details)
 
     return (
         f"Task brief:\n{observation.task_brief}\n\n"
-        f"Current workspace:\n{render_workspace(observation.workspace_files)}\n\n"
+        f"Workspace manifest:\n{manifest_block}\n\n"
+        f"Loaded workspace files:\n{loaded_files}\n\n"
         f"Latest feedback: {observation.feedback}\n"
         f"Public tests passed: {observation.tests_passed}/{observation.tests_total}\n"
         f"Test runs used: {observation.test_runs_used}/{observation.max_test_runs}\n"
+        f"Lint issues: {', '.join(observation.lint_issues) if observation.lint_issues else 'None'}\n"
         f"Failure details:\n{failure_block}\n\n"
         "Return only JSON with:\n"
         '{\n'
@@ -159,6 +163,36 @@ def sanitize_action_for_log(action: ReviewAction) -> str:
     return json.dumps(payload, separators=(",", ":"), ensure_ascii=True)
 
 
+def merge_workspace_cache(
+    workspace_cache: dict[str, str],
+    observation: ReviewObservation,
+) -> ReviewObservation:
+    if observation.workspace_files:
+        workspace_cache.update(observation.workspace_files)
+    return ReviewObservation(
+        done=observation.done,
+        solved=observation.solved,
+        reward=observation.reward,
+        task_brief=observation.task_brief,
+        workspace_files=dict(workspace_cache),
+        workspace_manifest=list(observation.workspace_manifest),
+        stdout=observation.stdout,
+        stderr=observation.stderr,
+        exit_code=observation.exit_code,
+        feedback=observation.feedback,
+        lint_issues=list(observation.lint_issues),
+        failing_tests=list(observation.failing_tests),
+        failure_details=list(observation.failure_details),
+        task_id=observation.task_id,
+        difficulty=observation.difficulty,
+        tests_passed=observation.tests_passed,
+        tests_total=observation.tests_total,
+        test_runs_used=observation.test_runs_used,
+        max_test_runs=observation.max_test_runs,
+        metadata=observation.metadata,
+    )
+
+
 def per_difficulty_breakdown(records: list[dict[str, Any]]) -> dict[str, dict[str, float | int]]:
     breakdown: dict[str, dict[str, float | int]] = {}
     for difficulty in ("easy", "medium", "hard"):
@@ -204,7 +238,29 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 task_id=task["id"],
                 seed=episode_seed,
             )
-            observation = reset_result.observation
+            workspace_cache: dict[str, str] = {}
+            observation = merge_workspace_cache(workspace_cache, reset_result.observation)
+
+            if observation.workspace_manifest:
+                paths = [entry.split(" (", 1)[0] for entry in observation.workspace_manifest]
+                read_action = ReviewAction(action_type="read_files", paths=paths, summary="Load workspace files")
+                read_log = sanitize_action_for_log(read_action)
+                action_logs.append(read_log)
+                read_result = env_client.step(read_action)
+                steps_taken += 1
+                rewards.append(float(read_result.reward or 0.0))
+                log_step(
+                    step=steps_taken,
+                    action=read_log,
+                    reward=float(read_result.reward or 0.0),
+                    done=read_result.done,
+                    error=None,
+                )
+                observation = merge_workspace_cache(workspace_cache, read_result.observation)
+                last_feedback = observation.feedback
+                if read_result.done:
+                    success = bool(observation.solved)
+                    raise RuntimeError("Episode ended during initial read_files step.")
 
             while True:
                 raw_model_response, update_action = get_model_update(
@@ -226,9 +282,28 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                     done=update_result.done,
                     error=None,
                 )
-                observation = update_result.observation
+                observation = merge_workspace_cache(workspace_cache, update_result.observation)
                 last_feedback = observation.feedback
                 if update_result.done:
+                    success = bool(observation.solved)
+                    break
+
+                lint_action = ReviewAction(action_type="run_lint")
+                lint_log = sanitize_action_for_log(lint_action)
+                action_logs.append(lint_log)
+                lint_result = env_client.step(lint_action)
+                steps_taken += 1
+                rewards.append(float(lint_result.reward or 0.0))
+                log_step(
+                    step=steps_taken,
+                    action=lint_log,
+                    reward=float(lint_result.reward or 0.0),
+                    done=lint_result.done,
+                    error=None,
+                )
+                observation = merge_workspace_cache(workspace_cache, lint_result.observation)
+                last_feedback = observation.feedback
+                if lint_result.done:
                     success = bool(observation.solved)
                     break
 
@@ -245,7 +320,7 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                     done=test_result.done,
                     error=None,
                 )
-                observation = test_result.observation
+                observation = merge_workspace_cache(workspace_cache, test_result.observation)
                 last_feedback = observation.feedback
                 if test_result.done:
                     success = bool(observation.solved)

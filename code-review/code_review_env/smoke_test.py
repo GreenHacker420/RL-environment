@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -16,14 +17,18 @@ except ImportError:
 
 
 def main() -> None:
-    client = CodeReviewEnvClient(base_url="http://localhost:7860").sync()
+    client = CodeReviewEnvClient(base_url=os.getenv("ENV_URL", "http://localhost:7860")).sync()
     with client:
         reset_result = client.reset(difficulty="easy", task_id="easy_implementation_discount", seed=42)
         print("RESET")
         print(json.dumps(reset_result.observation.model_dump(), indent=2))
         task_brief = reset_result.observation.task_brief
-        workspace_path = next(iter(reset_result.observation.workspace_files))
+        workspace_path = reset_result.observation.workspace_manifest[0].split(" (", 1)[0]
         function_name = task_brief.split("`")[1].split("(")[0]
+
+        read_result = client.step(ReviewAction(action_type="read_files", paths=[workspace_path]))
+        print("READ")
+        print(json.dumps(read_result.observation.model_dump(), indent=2))
 
         partial_update = client.step(
             ReviewAction(
@@ -39,6 +44,10 @@ def main() -> None:
         )
         print("UPDATE 1")
         print(json.dumps(partial_update.observation.model_dump(), indent=2))
+
+        lint_result = client.step(ReviewAction(action_type="run_lint"))
+        print("LINT 1")
+        print(json.dumps(lint_result.observation.model_dump(), indent=2))
 
         first_test = client.step(ReviewAction(action_type="run_tests"))
         print("TEST 1")
@@ -62,6 +71,10 @@ def main() -> None:
         )
         print("UPDATE 2")
         print(json.dumps(final_update.observation.model_dump(), indent=2))
+
+        second_lint = client.step(ReviewAction(action_type="run_lint"))
+        print("LINT 2")
+        print(json.dumps(second_lint.observation.model_dump(), indent=2))
 
         second_test = client.step(ReviewAction(action_type="run_tests"))
         print("TEST 2")
