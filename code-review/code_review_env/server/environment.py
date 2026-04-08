@@ -218,13 +218,6 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         exhausted_tests = self._state.test_runs_used >= self._task["max_test_runs"]
         self._done = bool(result["success"]) or exhausted_tests
 
-        if result["success"]:
-            status = "Solved. Public and hidden tests passed."
-        elif exhausted_tests:
-            status = "Test budget exhausted."
-        else:
-            status = "Continue editing the workspace."
-
         if result["hidden_checked"]:
             hidden_text = f" Hidden tests {result['hidden_passed']}/{result['hidden_total']}."
         else:
@@ -234,8 +227,18 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         if result["failure_details"]:
             detail_text = f" Details: {' | '.join(result['failure_details'][:2])}."
 
+        if result["success"]:
+            prefix = "Solved."
+            status = "Public and hidden tests passed."
+        elif exhausted_tests:
+            prefix = "Test budget exhausted."
+            status = "No more test runs remain."
+        else:
+            prefix = "Continue editing."
+            status = "Make another workspace change before the next test run."
+
         feedback = self._maybe_finish_for_step_budget(
-            f"Test run {self._state.test_runs_used}/{self._task['max_test_runs']}. "
+            f"{prefix} Test run {self._state.test_runs_used}/{self._task['max_test_runs']}. "
             f"Public tests {result['public_passed']}/{result['public_total']}.{hidden_text} "
             f"{status}{detail_text}"
         )
