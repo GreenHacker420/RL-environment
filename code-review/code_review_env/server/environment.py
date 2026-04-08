@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 import sys
+from hashlib import sha256
 from pathlib import Path
 from uuid import uuid4
 
@@ -24,6 +25,16 @@ def _copy_workspace(files: dict[str, str]) -> dict[str, str]:
     return dict(files)
 
 
+def _workspace_signature(files: dict[str, str]) -> str:
+    digest = sha256()
+    for path in sorted(files):
+        digest.update(path.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(files[path].encode("utf-8"))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
     SUPPORTS_CONCURRENT_SESSIONS = True
 
@@ -33,6 +44,9 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         self._workspace: dict[str, str] = {}
         self._done = False
         self._solved = False
+        self._pending_penalty = 0.0
+        self._changed_since_test = False
+        self._last_test_signature = ""
         self._last_public_passed = 0
         self._last_failing_tests: list[str] = []
         self._last_failure_details: list[str] = []
@@ -148,6 +162,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         editable = set(self._task["editable_files"])
         proposed_files = action.files or {}
         if not proposed_files:
+            self._pending_penalty = min(0.25, self._pending_penalty + 0.05)
             feedback = self._maybe_finish_for_step_budget("No file updates were provided.")
             return self._base_observation(
                 reward=0.0,
@@ -159,6 +174,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
 
         invalid_paths = [path for path in proposed_files if path not in editable]
         if invalid_paths:
+            self._pending_penalty = min(0.25, self._pending_penalty + 0.08)
             feedback = self._maybe_finish_for_step_budget(
                 f"Update rejected. Only editable files may be changed: {', '.join(self._task['editable_files'])}."
             )
@@ -170,12 +186,25 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
                 feedback=feedback,
             )
 
-        self._workspace.update(proposed_files)
+        changed_paths = [
+            path for path, content in proposed_files.items() if self._workspace.get(path) != content
+        ]
+        unchanged_count = len(proposed_files) - len(changed_paths)
+        if unchanged_count:
+            penalty = 0.08 if unchanged_count == len(proposed_files) else min(0.06, 0.03 * unchanged_count)
+            self._pending_penalty = min(0.25, self._pending_penalty + penalty)
+
+        for path in changed_paths:
+            self._workspace[path] = proposed_files[path]
+        if changed_paths:
+            self._changed_since_test = True
         self._sync_state()
 
         validation_task = {"editable_files": list(proposed_files)}
         validation = quality_report(validation_task, self._workspace)
         notes = validation["messages"][:3]
+        if unchanged_count:
+            notes.append(f"{unchanged_count} unchanged file update(s) reduced the next test reward")
         note_text = f" Validation notes: {' | '.join(notes)}." if notes else ""
         feedback = self._maybe_finish_for_step_budget(
             f"Updated {len(proposed_files)} file(s).{note_text}"
@@ -193,6 +222,9 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         assert self._task is not None
         next_test_run = self._state.test_runs_used + 1
         should_check_hidden = next_test_run >= self._task["max_test_runs"]
+        current_signature = _workspace_signature(self._workspace)
+        if not self._changed_since_test and self._last_test_signature == current_signature:
+            self._pending_penalty = min(0.25, self._pending_penalty + 0.10)
 
         result = evaluate_workspace(
             self._task,
@@ -220,7 +252,8 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
             (self._task["max_test_runs"] - next_test_run) / self._task["max_test_runs"],
         )
         efficiency_score = (remaining_step_ratio + remaining_test_ratio) / 2
-        final_score = min(1.0, float(result["score"]) + (0.10 * efficiency_score))
+        penalty_applied = self._pending_penalty
+        final_score = max(0.0, min(1.0, float(result["score"]) + (0.10 * efficiency_score) - penalty_applied))
 
         self._solved = bool(result["success"])
         self._state.best_score = max(self._state.best_score, final_score)
@@ -239,6 +272,9 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         detail_text = ""
         if result["failure_details"]:
             detail_text = f" Details: {' | '.join(result['failure_details'][:2])}."
+        penalty_text = ""
+        if penalty_applied > 0:
+            penalty_text = f" Penalty applied: -{penalty_applied:.2f} for inefficient or no-op behavior."
 
         if result["success"]:
             prefix = "Solved."
@@ -253,8 +289,12 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         feedback = self._maybe_finish_for_step_budget(
             f"{prefix} Test run {self._state.test_runs_used}/{self._task['max_test_runs']}. "
             f"Public tests {result['public_passed']}/{result['public_total']}.{hidden_text} "
-            f"{status} Reward components include hidden-test progress and efficiency.{detail_text}"
+            f"{status} Reward components include hidden-test progress and efficiency.{penalty_text}{detail_text}"
         )
+
+        self._pending_penalty = 0.0
+        self._changed_since_test = False
+        self._last_test_signature = current_signature
 
         return self._base_observation(
             reward=final_score,
@@ -279,6 +319,9 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         self._workspace = _copy_workspace(self._task["workspace_files"])
         self._done = False
         self._solved = False
+        self._pending_penalty = 0.0
+        self._changed_since_test = False
+        self._last_test_signature = ""
         self._last_public_passed = 0
         self._last_failing_tests = []
         self._last_failure_details = []

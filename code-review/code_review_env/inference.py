@@ -307,7 +307,7 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the CodeReviewEnv baseline.")
     parser.add_argument("--url", default="http://localhost:7860")
-    parser.add_argument("--episodes", type=int, default=len(TASKS))
+    parser.add_argument("--episodes", type=int, default=len(TASKS) * 3)
     parser.add_argument("--seed", type=int, default=42)
     return parser.parse_args()
 

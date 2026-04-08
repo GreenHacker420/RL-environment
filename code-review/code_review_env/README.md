@@ -138,9 +138,17 @@ Reward is issued mainly on `run_tests`.
 
 Current `run_tests` formula:
 
-- `0.80 * public_test_pass_ratio`
-- `0.10 * improvement_over_previous_best_public_ratio`
-- `0.10 * deterministic_quality_score`
+- `0.40 * public_test_pass_ratio`
+- `0.25 * hidden_test_pass_ratio` once hidden tests are checked
+- `0.15 * deterministic_quality_score`
+- `0.10 * module_load_validity`
+- `0.10 * execution_efficiency` based on remaining step and test budget
+
+Additional reward penalties:
+
+- no-op file updates reduce the next `run_tests` reward
+- rerunning tests without changing the workspace reduces the next `run_tests` reward
+- invalid update attempts accumulate a small penalty for the next test run
 
 The deterministic quality score checks:
 
@@ -150,7 +158,9 @@ The deterministic quality score checks:
 - no top-level debug `print()` calls
 
 Hidden tests are checked once public tests pass or on the final allowed test
-run. Success requires hidden tests to pass.
+run. Success requires hidden tests to pass. A solved episode can still score
+below `1.0` if it uses extra actions or test runs, which keeps the baseline
+more realistic than a binary all-or-nothing benchmark.
 
 Budgets:
 
@@ -186,6 +196,7 @@ ReviewAction(
 
 `ReviewObservation` contains:
 
+- `solved`
 - `task_brief`
 - `workspace_files`
 - `stdout`
@@ -214,6 +225,7 @@ than relying only on prose.
 - `step_count`
 - `difficulty`
 - `best_score`
+- `solved`
 - `tests_passed`
 - `tests_total`
 - `test_runs_used`
@@ -396,7 +408,7 @@ python inference.py --url http://localhost:7860 --episodes 6 --seed 42
 Current committed local baseline from:
 
 ```bash
-python inference.py --url http://localhost:7860 --episodes 6 --seed 42
+python inference.py --url http://localhost:7860 --episodes 18 --seed 42
 ```
 
 using:
@@ -406,11 +418,11 @@ using:
 
 Results:
 
-- mean score: `1.0000`
-- std score: `0.0000`
-- easy mean: `1.0000`
-- medium mean: `1.0000`
-- hard mean: `1.0000`
+- mean score: `0.9377`
+- std score: `0.1429`
+- easy mean: `0.9708`
+- medium mean: `0.9792`
+- hard mean: `0.8630`
 
 These numbers are recorded in [results.json](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/results.json).
 If you switch models or endpoints, rerun [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)
