@@ -272,7 +272,6 @@ def run_workspace_tests(
 def evaluate_workspace(
     task: dict[str, Any],
     workspace_files: dict[str, str],
-    previous_best_public_ratio: float = 0.0,
     run_hidden: bool = False,
 ) -> dict[str, Any]:
     public_results = run_workspace_tests(workspace_files, task["public_tests"])
@@ -291,8 +290,14 @@ def evaluate_workspace(
         hidden_ratio = 0.0 if hidden_total == 0 else hidden_passed / hidden_total
 
     quality = quality_report(task, workspace_files)
-    improvement = max(0.0, public_ratio - previous_best_public_ratio)
-    score = _clamp((0.80 * public_ratio) + (0.10 * improvement) + (0.10 * float(quality["score"])))
+    hidden_component = hidden_ratio if run_hidden else 0.0
+    load_validity = 1.0 if public_results.get("load_ok", False) and (not hidden_results or hidden_results.get("load_ok", False)) else 0.0
+    score = _clamp(
+        (0.40 * public_ratio)
+        + (0.25 * hidden_component)
+        + (0.15 * float(quality["score"]))
+        + (0.10 * load_validity)
+    )
 
     public_failures = public_results.get("failures", [])
     hidden_failures = hidden_results.get("failures", []) if hidden_results else []
@@ -325,4 +330,5 @@ def evaluate_workspace(
         "failure_details": failure_details[:5],
         "quality_score": float(quality["score"]),
         "quality_messages": quality["messages"],
+        "load_validity": load_validity,
     }

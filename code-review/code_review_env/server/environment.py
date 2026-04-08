@@ -32,7 +32,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         self._task: dict | None = None
         self._workspace: dict[str, str] = {}
         self._done = False
-        self._best_public_ratio = 0.0
+        self._solved = False
         self._last_public_passed = 0
         self._last_failing_tests: list[str] = []
         self._last_failure_details: list[str] = []
@@ -41,6 +41,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
             step_count=0,
             difficulty="easy",
             best_score=0.0,
+            solved=False,
             tests_passed=0,
             tests_total=0,
             test_runs_used=0,
@@ -84,6 +85,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
 
         return ReviewObservation(
             done=self._done,
+            solved=self._solved,
             reward=reward,
             task_brief=self._task["task_brief"],
             workspace_files=workspace_files,
@@ -195,28 +197,39 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         result = evaluate_workspace(
             self._task,
             self._workspace,
-            previous_best_public_ratio=self._best_public_ratio,
             run_hidden=False,
         )
         if result["public_ratio"] == 1.0 or should_check_hidden:
             result = evaluate_workspace(
                 self._task,
                 self._workspace,
-                previous_best_public_ratio=self._best_public_ratio,
                 run_hidden=True,
             )
 
         self._state.test_runs_used = next_test_run
-        self._best_public_ratio = max(self._best_public_ratio, float(result["public_ratio"]))
         self._last_public_passed = int(result["public_passed"])
         self._last_failing_tests = list(result["failing_tests"])
         self._last_failure_details = list(result["failure_details"])
-        self._state.best_score = max(self._state.best_score, float(result["score"]))
+
+        remaining_step_ratio = max(
+            0.0,
+            (self._task["max_steps"] - self._state.step_count) / self._task["max_steps"],
+        )
+        remaining_test_ratio = max(
+            0.0,
+            (self._task["max_test_runs"] - next_test_run) / self._task["max_test_runs"],
+        )
+        efficiency_score = (remaining_step_ratio + remaining_test_ratio) / 2
+        final_score = min(1.0, float(result["score"]) + (0.10 * efficiency_score))
+
+        self._solved = bool(result["success"])
+        self._state.best_score = max(self._state.best_score, final_score)
+        self._state.solved = self._solved
         self._state.tests_passed = max(self._state.tests_passed, int(result["public_passed"]))
         self._state.tests_total = int(result["public_total"])
 
         exhausted_tests = self._state.test_runs_used >= self._task["max_test_runs"]
-        self._done = bool(result["success"]) or exhausted_tests
+        self._done = self._solved or exhausted_tests
 
         if result["hidden_checked"]:
             hidden_text = f" Hidden tests {result['hidden_passed']}/{result['hidden_total']}."
@@ -240,11 +253,11 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         feedback = self._maybe_finish_for_step_budget(
             f"{prefix} Test run {self._state.test_runs_used}/{self._task['max_test_runs']}. "
             f"Public tests {result['public_passed']}/{result['public_total']}.{hidden_text} "
-            f"{status}{detail_text}"
+            f"{status} Reward components include hidden-test progress and efficiency.{detail_text}"
         )
 
         return self._base_observation(
-            reward=float(result["score"]),
+            reward=final_score,
             workspace_files=self._workspace_view(),
             stdout=result["stdout"],
             stderr=result["stderr"],
@@ -265,7 +278,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         self._task = self._select_task(difficulty=difficulty, seed=seed, task_id=task_id)
         self._workspace = _copy_workspace(self._task["workspace_files"])
         self._done = False
-        self._best_public_ratio = 0.0
+        self._solved = False
         self._last_public_passed = 0
         self._last_failing_tests = []
         self._last_failure_details = []
@@ -274,6 +287,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
             step_count=0,
             difficulty=self._task["difficulty"],
             best_score=0.0,
+            solved=False,
             tests_passed=0,
             tests_total=len(self._task["public_tests"]),
             test_runs_used=0,

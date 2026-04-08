@@ -49,6 +49,7 @@ class ReviewAction(Action):
 @dataclass(init=False)
 class ReviewObservation(Observation):
     done: bool = Field(default=False, description="Whether the episode is complete.")
+    solved: bool = Field(default=False, description="Whether the hidden success condition has been satisfied.")
     reward: float = Field(default=0.0, description="Reward returned by the environment.")
     task_brief: str = Field(default="", description="Short task description for the active workspace.")
     workspace_files: dict[str, str] = Field(
@@ -77,6 +78,7 @@ class ReviewObservation(Observation):
     def __init__(
         self,
         done: bool = False,
+        solved: bool = False,
         reward: float = 0.0,
         task_brief: str = "",
         workspace_files: dict[str, str] | None = None,
@@ -96,6 +98,7 @@ class ReviewObservation(Observation):
     ) -> None:
         super().__init__(
             done=done,
+            solved=solved,
             reward=reward,
             task_brief=task_brief,
             workspace_files=workspace_files or {},
@@ -121,6 +124,7 @@ class ReviewState(State):
     step_count: int = Field(default=0, description="Total number of actions taken in this episode.")
     difficulty: str = Field(default="easy", description="Difficulty of the active workspace.")
     best_score: float = Field(default=0.0, description="Best reward achieved so far in this episode.")
+    solved: bool = Field(default=False, description="Whether the episode has been solved.")
     tests_passed: int = Field(default=0, description="Best public test count achieved so far.")
     tests_total: int = Field(default=0, description="Total public test count for the active task.")
     test_runs_used: int = Field(default=0, description="Number of run_tests calls used in the episode.")
@@ -137,6 +141,7 @@ class ReviewState(State):
         step_count: int = 0,
         difficulty: str = "easy",
         best_score: float = 0.0,
+        solved: bool = False,
         tests_passed: int = 0,
         tests_total: int = 0,
         test_runs_used: int = 0,
@@ -149,6 +154,7 @@ class ReviewState(State):
             step_count=step_count,
             difficulty=difficulty,
             best_score=best_score,
+            solved=solved,
             tests_passed=tests_passed,
             tests_total=tests_total,
             test_runs_used=test_runs_used,

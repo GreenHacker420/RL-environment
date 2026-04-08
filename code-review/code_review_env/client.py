@@ -29,6 +29,7 @@ class CodeReviewEnvClient(
         observation_data = payload.get("observation", {})
         observation = ReviewObservation(
             done=payload.get("done", False),
+            solved=observation_data.get("solved", False),
             reward=float(payload.get("reward", 0.0) or 0.0),
             task_brief=observation_data.get("task_brief", ""),
             workspace_files=observation_data.get("workspace_files", {}),
@@ -58,6 +59,7 @@ class CodeReviewEnvClient(
             step_count=int(payload.get("step_count", 0)),
             difficulty=payload.get("difficulty", "easy"),
             best_score=float(payload.get("best_score", 0.0) or 0.0),
+            solved=payload.get("solved", False),
             tests_passed=int(payload.get("tests_passed", 0)),
             tests_total=int(payload.get("tests_total", 0)),
             test_runs_used=int(payload.get("test_runs_used", 0)),

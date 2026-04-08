@@ -289,7 +289,7 @@ def _build_medium_repair_budget(seed: int | None) -> dict[str, Any]:
         "title": "Repair budget tracking regressions",
         "task_brief": (
             f"Repair `{class_name}` in `{file_name}`. "
-            "Expenses should increase `spent`, remaining budget should subtract spent from limit, and over-budget detection should only be true once spending exceeds the limit."
+            "Expenses should increase `spent`, remaining budget should subtract spent from limit even when the result becomes negative, and over-budget detection should only be true once spending exceeds the limit."
         ),
         "workspace_files": workspace_files,
         "editable_files": [file_name],
@@ -336,6 +336,17 @@ def _build_medium_repair_budget(seed: int | None) -> dict[str, Any]:
                 ],
                 50,
                 constructor_args=[50],
+            ),
+            _class_case(
+                "negative_remaining_after_overspend",
+                module,
+                class_name,
+                [
+                    {"method": "add_expense", "args": [120]},
+                    {"method": "remaining", "args": []},
+                ],
+                -20,
+                constructor_args=[100],
             ),
             _class_case(
                 "not_over_budget",

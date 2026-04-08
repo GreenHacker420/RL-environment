@@ -185,6 +185,7 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
 
     for episode_index, task in enumerate(task_schedule(episodes), start=1):
+        episode_seed = seed + episode_index - 1
         rewards: list[float] = []
         steps_taken = 0
         score = 0.0
@@ -198,14 +199,18 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
         log_start(task=task["id"], env=BENCHMARK, model=MODEL_NAME)
         try:
             env_client.connect()
-            reset_result = env_client.reset(difficulty=task["difficulty"], task_id=task["id"], seed=seed)
+            reset_result = env_client.reset(
+                difficulty=task["difficulty"],
+                task_id=task["id"],
+                seed=episode_seed,
+            )
             observation = reset_result.observation
 
             while True:
                 raw_model_response, update_action = get_model_update(
                     client=model_client,
                     observation=observation,
-                    seed=seed + episode_index + steps_taken,
+                    seed=episode_seed + steps_taken,
                 )
                 model_outputs.append(raw_model_response)
 
@@ -224,7 +229,7 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 observation = update_result.observation
                 last_feedback = observation.feedback
                 if update_result.done:
-                    success = float(update_result.reward or 0.0) >= 0.999
+                    success = bool(observation.solved)
                     break
 
                 run_action = ReviewAction(action_type="run_tests")
@@ -243,12 +248,12 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 observation = test_result.observation
                 last_feedback = observation.feedback
                 if test_result.done:
-                    success = float(test_result.reward or 0.0) >= 0.999
+                    success = bool(observation.solved)
                     break
 
             state = env_client.state()
             score = float(state.best_score)
-            success = success or score >= 0.999
+            success = success or bool(state.solved)
         except Exception as exc:
             error_message = str(exc).replace("\n", " ").strip()
             log_step(
@@ -268,6 +273,7 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
         records.append(
             {
                 "episode": episode_index,
+                "seed": episode_seed,
                 "task_id": task["id"],
                 "difficulty": task["difficulty"],
                 "score": score,

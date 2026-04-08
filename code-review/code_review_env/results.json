@@ -26,10 +26,11 @@
   "episodes": [
     {
       "episode": 1,
+      "seed": 42,
       "task_id": "easy_implementation_discount",
       "difficulty": "easy",
       "score": 1.0,
-      "success": true,
+      "success": false,
       "steps": 2,
       "rewards": [
         0.0,
@@ -37,20 +38,21 @@
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"offers.py\": \"def apply_discount(subtotal, has_coupon):\\n    \\\"\\\"\\\"Return the final total after applying an optional coupon.\\\"\\\"\\\"\\n    if has_coupon:\\n        subtotal *= 0.85  # Apply 15% discount\\n    return round(subtotal, 2)  # Round to 2 decimal places\"\n  },\n  \"summary\": \"Implemented the apply_discount function with coupon logic and rounding.\"\n}"
+        "{\n  \"files\": {\n    \"offers.py\": \"def apply_discount(subtotal, has_coupon):\\n    \\\"\\\"\\\"Return the final total after applying an optional coupon.\\\"\\\"\\\"\\n    if has_coupon:\\n        subtotal *= 0.85  # Apply 15% discount\\n    return round(subtotal, 2)  # Round to 2 decimal places\"\n  },\n  \"summary\": \"Implemented apply_discount function with coupon logic and rounding.\"\n}"
       ],
       "actions": [
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"offers.py\"],\"summary\":\"Implemented the apply_discount function with coupon logic and rounding.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"offers.py\"],\"summary\":\"Implemented apply_discount function with coupon logic and rounding.\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
       "final_feedback": "Test run 1/3. Public tests 2/2. Hidden tests 2/2. Solved. Public and hidden tests passed."
     },
     {
       "episode": 2,
+      "seed": 43,
       "task_id": "easy_repair_slugify",
       "difficulty": "easy",
       "score": 1.0,
-      "success": true,
+      "success": false,
       "steps": 2,
       "rewards": [
         0.0,
@@ -58,20 +60,21 @@
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"strings.py\": \"def slugify_label(text):\\n    \\\"\\\"\\\"Trim text, lowercase it, and join words with single dashes.\\\"\\\"\\\"\\n    import re\\n    text = text.strip().lower()\\n    return re.sub(r'\\\\s+', '-', text)\"\n  },\n  \"summary\": \"Updated slugify_label to trim, lowercase, and collapse whitespace using regex.\"\n}"
+        "{\n  \"files\": {\n    \"labels.py\": \"import re\\ndef slugify_label(text):\\n    \\\"\\\"\\\"Trim text, lowercase it, and join words with single dashes.\\\"\\\"\\\"\\n    # Trim outer whitespace\\n    text = text.strip()\\n    # Replace all whitespace sequences with a single dash\\n    text = re.sub(r'\\\\s+', '-', text)\\n    # Lowercase the text\\n    return text.lower()\"\n  },\n  \"summary\": \"Updated slugify_label to handle trimming, lowercasing, and collapsing whitespace.\"\n}"
       ],
       "actions": [
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"strings.py\"],\"summary\":\"Updated slugify_label to trim, lowercase, and collapse whitespace using regex.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"labels.py\"],\"summary\":\"Updated slugify_label to handle trimming, lowercasing, and collapsing whitespace.\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
       "final_feedback": "Test run 1/3. Public tests 2/2. Hidden tests 2/2. Solved. Public and hidden tests passed."
     },
     {
       "episode": 3,
+      "seed": 44,
       "task_id": "medium_implementation_inventory",
       "difficulty": "medium",
       "score": 1.0,
-      "success": true,
+      "success": false,
       "steps": 2,
       "rewards": [
         0.0,
@@ -79,20 +82,21 @@
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"inventory.py\": \"class InventoryTracker:\\n    def __init__(self):\\n        self._items = {}\\n\\n    def add_item(self, name, quantity):\\n        if quantity > 0:\\n            if name in self._items:\\n                self._items[name] += quantity\\n            else:\\n                self._items[name] = quantity\\n\\n    def remove_item(self, name, quantity):\\n        if name in self._items:\\n            if quantity >= 0:\\n                self._items[name] -= quantity\\n                if self._items[name] < 0:\\n                    self._items[name] = 0\\n\\n    def available(self, name):\\n        return self._items.get(name, 0)\"\n  },\n  \"summary\": \"Implemented all methods for InventoryTracker.\"\n}"
+        "{\n  \"files\": {\n    \"stock.py\": \"class InventoryTracker:\\n    def __init__(self):\\n        self._items = {}\\n\\n    def add_item(self, name, quantity):\\n        if quantity > 0:\\n            if name in self._items:\\n                self._items[name] += quantity\\n            else:\\n                self._items[name] = quantity\\n\\n    def remove_item(self, name, quantity):\\n        if name in self._items:\\n            self._items[name] = max(0, self._items[name] - quantity)\\n\\n    def available(self, name):\\n        return self._items.get(name, 0)\"\n  },\n  \"summary\": \"Implemented add_item, remove_item, and available methods.\"\n}"
       ],
       "actions": [
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"inventory.py\"],\"summary\":\"Implemented all methods for InventoryTracker.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"stock.py\"],\"summary\":\"Implemented add_item, remove_item, and available methods.\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
       "final_feedback": "Test run 1/4. Public tests 3/3. Hidden tests 2/2. Solved. Public and hidden tests passed."
     },
     {
       "episode": 4,
+      "seed": 45,
       "task_id": "medium_repair_budget",
       "difficulty": "medium",
       "score": 1.0,
-      "success": true,
+      "success": false,
       "steps": 2,
       "rewards": [
         0.0,
@@ -100,20 +104,21 @@
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"tracker.py\": \"class SpendTracker:\\n    def __init__(self, limit):\\n        self.limit = limit\\n        self.spent = 0\\n\\n    def add_expense(self, amount):\\n        if amount < 0:\\n            return self.spent\\n        self.spent += amount\\n        return self.spent\\n\\n    def remaining(self):\\n        return max(0, self.limit - self.spent)\\n\\n    def is_over_budget(self):\\n        return self.spent > self.limit\"\n  },\n  \"summary\": \"Fixed add_expense to correctly add to spent, updated remaining to subtract spent from limit, and corrected is_over_budget to return true when spent exceeds limit.\"\n}"
+        "{\n  \"files\": {\n    \"tracker.py\": \"class BudgetTracker:\\n    def __init__(self, limit):\\n        self.limit = limit\\n        self.spent = 0\\n\\n    def add_expense(self, amount):\\n        if amount < 0:\\n            return self.spent\\n        self.spent += amount\\n        return self.spent\\n\\n    def remaining(self):\\n        return max(0, self.limit - self.spent)\\n\\n    def is_over_budget(self):\\n        return self.spent > self.limit\"\n  },\n  \"summary\": \"Fixed add_expense to correctly add amounts, updated remaining to subtract spent from limit, and corrected is_over_budget logic.\"\n}"
       ],
       "actions": [
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"tracker.py\"],\"summary\":\"Fixed add_expense to correctly add to spent, updated remaining to subtract spent from limit, and corrected is_over_budget to return true when spent exceeds limit.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"tracker.py\"],\"summary\":\"Fixed add_expense to correctly add amounts, updated remaining to subtract spent from limit, and corrected is_over_budget logic.\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
       "final_feedback": "Test run 1/4. Public tests 3/3. Hidden tests 2/2. Solved. Public and hidden tests passed."
     },
     {
       "episode": 5,
+      "seed": 46,
       "task_id": "hard_integration_orders",
       "difficulty": "hard",
       "score": 1.0,
-      "success": true,
+      "success": false,
       "steps": 2,
       "rewards": [
         0.0,
@@ -121,20 +126,21 @@
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"checkout.py\": \"from pricebook import lookup_price\\n\\ndef calculate_total(items, tax_rate):\\n    subtotal = 0.0\\n    for item_name, quantity in items.items():\\n        subtotal += lookup_price(item_name) * quantity\\n    total_with_tax = subtotal * (1 + tax_rate)\\n    return round(total_with_tax, 2)\",\n    \"summary.py\": \"from checkout import calculate_total\\n\\ndef render_receipt(items, tax_rate):\\n    total = calculate_total(items, tax_rate)\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Updated checkout.py to correctly calculate subtotal and apply tax. Updated summary.py to format total with two decimal places.\"\n}"
+        "{\n  \"files\": {\n    \"catalog.py\": \"PRICES = {'tea': 4.5, 'coffee': 6.0, 'cake': 5.5}\\n\\ndef lookup_price(item_name):\\n    return PRICES[item_name]\",\n    \"checkout.py\": \"from catalog import lookup_price\\n\\ndef calculate_total(items, tax_rate):\\n    subtotal = 0.0\\n    for item_name, quantity in items.items():\\n        price = lookup_price(item_name)\\n        subtotal += price * quantity\\n    total_with_tax = subtotal * (1 + tax_rate)\\n    return round(total_with_tax, 2)\",\n    \"summary.py\": \"from checkout import calculate_total\\n\\ndef render_receipt(items, tax_rate):\\n    total = calculate_total(items, tax_rate)\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Updated checkout and summary functions to correctly calculate totals and format output.\"\n}"
       ],
       "actions": [
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"checkout.py\",\"summary.py\"],\"summary\":\"Updated checkout.py to correctly calculate subtotal and apply tax. Updated summary.py to format total with two decimal places.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"catalog.py\",\"checkout.py\",\"summary.py\"],\"summary\":\"Updated checkout and summary functions to correctly calculate totals and format output.\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
       "final_feedback": "Test run 1/4. Public tests 3/3. Hidden tests 2/2. Solved. Public and hidden tests passed."
     },
     {
       "episode": 6,
+      "seed": 47,
       "task_id": "hard_repair_auth",
       "difficulty": "hard",
       "score": 1.0,
-      "success": true,
+      "success": false,
       "steps": 2,
       "rewards": [
         0.0,
@@ -142,10 +148,10 @@
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"auth.py\": \"USERS = {'admin': 'secret', 'guest': 'guest'}\\ndef authenticate(username, password):\\n    return USERS.get(username) == password\",\n    \"policy.py\": \"def role_for(username):\\n    return 'admin' if username == 'admin' else 'viewer'\\ndef can_edit(role):\\n    return role == 'admin'\",\n    \"workspace.py\": \"from auth import authenticate\\nfrom policy import can_edit, role_for\\ndef build_session(username, password):\\n    if not authenticate(username, password):\\n        return None\\n    role = role_for(username)\\n    return {'user': username, 'role': role, 'can_edit': can_edit(role)}\"\n  },\n  \"summary\": \"Fixed authentication logic and session building.\"\n}"
+        "{\n  \"files\": {\n    \"identity.py\": \"USERS = {'admin': 'secret', 'guest': 'guest'}\\ndef authenticate(username, password):\\n    return USERS.get(username) == password\",\n    \"permissions.py\": \"def role_for(username):\\n    return 'admin' if username == 'admin' else 'viewer'\\n\\ndef can_edit(role):\\n    return role == 'admin'\",\n    \"session.py\": \"from identity import authenticate\\nfrom permissions import can_edit, role_for\\n\\ndef build_session(username, password):\\n    if not authenticate(username, password):\\n        return None\\n    role = role_for(username)\\n    return {'user': username, 'role': role, 'can_edit': can_edit(role)}\"\n  },\n  \"summary\": \"Fixed the authentication logic and the session building process.\"\n}"
       ],
       "actions": [
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"auth.py\",\"policy.py\",\"workspace.py\"],\"summary\":\"Fixed authentication logic and session building.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"identity.py\",\"permissions.py\",\"session.py\"],\"summary\":\"Fixed the authentication logic and the session building process.\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
       "final_feedback": "Test run 1/4. Public tests 3/3. Hidden tests 2/2. Solved. Public and hidden tests passed."
