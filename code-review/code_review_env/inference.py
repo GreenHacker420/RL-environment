@@ -22,13 +22,33 @@ except ImportError:
     from tasks import TASKS, render_workspace
 
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-HF_TOKEN = os.getenv("HF_TOKEN")
 BENCHMARK = "code_review_env"
 TEMPERATURE = 0
 MAX_TOKENS = 2600
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
+
+
+def load_env_file(path: str = ".env") -> None:
+    env_path = Path(path)
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("'").strip('"')
+        if key:
+            os.environ.setdefault(key, value)
+
+
+load_env_file()
+
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -204,7 +224,7 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 observation = update_result.observation
                 last_feedback = observation.feedback
                 if update_result.done:
-                    success = observation.feedback.startswith("Solved.")
+                    success = float(update_result.reward or 0.0) >= 0.999
                     break
 
                 run_action = ReviewAction(action_type="run_tests")
@@ -223,11 +243,12 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 observation = test_result.observation
                 last_feedback = observation.feedback
                 if test_result.done:
-                    success = observation.feedback.startswith("Solved.")
+                    success = float(test_result.reward or 0.0) >= 0.999
                     break
 
             state = env_client.state()
             score = float(state.best_score)
+            success = success or score >= 0.999
         except Exception as exc:
             error_message = str(exc).replace("\n", " ").strip()
             log_step(
