@@ -122,12 +122,13 @@ Each episode works like this:
 3. The agent edits workspace files with `update_files`.
 4. The agent may run `run_lint` for deterministic local lint feedback.
 5. The agent calls `run_tests`.
-5. The environment returns:
+6. The environment returns:
    - public test progress
    - structured failure details
    - stdout, stderr, and exit code
+   - lint issues when applicable
    - reward
-6. The loop continues until hidden tests pass or the budgets are exhausted.
+7. The loop continues until hidden tests pass or the budgets are exhausted.
 
 This is intended to teach agents to improve code through execution feedback, not
 to guess a stored answer.
@@ -143,11 +144,11 @@ Reward is issued mainly on `run_tests`.
 
 Current `run_tests` formula:
 
-- `0.40 * public_test_pass_ratio`
+- `0.35 * public_test_pass_ratio`
 - `0.25 * hidden_test_pass_ratio` once hidden tests are checked
 - `0.15 * deterministic_quality_score`
 - `0.10 * module_load_validity`
-- `0.10 * execution_efficiency` based on remaining step and test budget
+- `0.08 * execution_efficiency` based on remaining step and test budget
 
 Additional reward penalties:
 
@@ -157,7 +158,7 @@ Additional reward penalties:
 
 Additional workflow bonuses:
 
-- a clean `run_lint` before `run_tests` adds a small deterministic workflow bonus
+- a clean `run_lint` before `run_tests` adds a small deterministic workflow bonus of up to `0.02`
 
 The deterministic quality score checks:
 
@@ -439,15 +440,41 @@ using:
 
 Results:
 
-- mean score: `0.9716`
-- std score: `0.0854`
-- easy mean: `0.9883`
-- medium mean: `1.0000`
-- hard mean: `0.9535`
+- mean score: `0.9025`
+- std score: `0.0682`
+- easy mean: `0.9167`
+- medium mean: `0.9267`
+- hard mean: `0.8871`
 
 These numbers are recorded in [results.json](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/results.json).
 If you switch models or endpoints, rerun [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)
 to refresh the baseline for that configuration.
+
+## Hackathon Submission Checklist
+
+The current repo is aligned with the Round 1 submission checklist:
+
+- `inference.py` is in the project root
+- all LLM calls use `from openai import OpenAI`
+- `API_BASE_URL` and `MODEL_NAME` have defaults
+- `HF_TOKEN` is required and has no default
+- stdout logs use the exact `[START]`, `[STEP]`, `[END]` format
+- `openenv validate` passes
+- the Docker image builds and serves `/health`, `/schema`, `/reset`, and `/web/`
+- the environment is stateful over WebSockets and suitable for HF Spaces deployment
+- `results.json` is produced by the baseline runner
+
+## Why Medium Is Not 1.0 Anymore
+
+Earlier versions of the reward math let clean one-shot solves saturate at `1.0`
+because the base execution score, efficiency bonus, and lint bonus left too
+little headroom. The current reward function keeps more headroom, so easy and
+medium one-shot solves now land around `0.92–0.93` instead of clipping to `1.0`.
+
+That makes the baseline more realistic without punishing correct solutions
+arbitrarily. Hard tasks still provide the main spread in scores, especially the
+config integration task, which can require multiple repair cycles or fail within
+budget.
 
 ## Manual API Testing
 

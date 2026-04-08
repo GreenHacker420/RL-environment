@@ -4,23 +4,23 @@
   "api_base_url": "https://router.huggingface.co/v1",
   "seed": 42,
   "episodes_requested": 27,
-  "mean_score": 0.9715873015873016,
-  "std_score": 0.08537344473201712,
+  "mean_score": 0.9024867724867724,
+  "std_score": 0.0682424103568469,
   "per_difficulty": {
     "easy": {
       "count": 6,
-      "mean_score": 0.9883333333333334,
+      "mean_score": 0.9166666666666666,
       "std_score": 0.0
     },
     "medium": {
       "count": 6,
-      "mean_score": 1.0,
+      "mean_score": 0.9266666666666666,
       "std_score": 0.0
     },
     "hard": {
       "count": 15,
-      "mean_score": 0.9535238095238096,
-      "std_score": 0.1127841299169671
+      "mean_score": 0.8871428571428571,
+      "std_score": 0.08977620377276152
     }
   },
   "episodes": [
@@ -29,380 +29,366 @@
       "seed": 42,
       "task_id": "easy_implementation_discount",
       "difficulty": "easy",
-      "score": 0.9883333333333334,
+      "score": 0.9166666666666666,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.9883333333333334
+        0.9166666666666666
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"offers.py\": \"def apply_discount(subtotal, has_coupon):\\n    \\\"\\\"\\\"Return the final total after applying an optional coupon.\\\"\\\"\\\"\\n    if has_coupon:\\n        subtotal *= 0.85  # Apply 15% discount\\n    return round(subtotal, 2)  # Round to 2 decimal places\"\n  },\n  \"summary\": \"Implemented the apply_discount function with coupon logic and rounding.\"\n}"
+        "{\n  \"files\": {\n    \"offers.py\": \"def apply_discount(subtotal, has_coupon):\\n    \\\"\\\"\\\"Return the final total after applying an optional coupon.\\\"\\\"\\\"\\n    if has_coupon:\\n        subtotal *= 0.85\\n    return round(subtotal, 2)\"\n  },\n  \"summary\": \"Implemented the apply_discount function with a 15% discount if has_coupon is True and rounded to 2 decimal places.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"offers.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"offers.py\"],\"summary\":\"Implemented the apply_discount function with coupon logic and rounding.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"offers.py\"],\"summary\":\"Implemented the apply_discount function with a 15% discount if has_coupon is True and rounded to 2 decimal places.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 2,
       "seed": 43,
       "task_id": "easy_repair_slugify",
       "difficulty": "easy",
-      "score": 0.9883333333333334,
+      "score": 0.9166666666666666,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.9883333333333334
+        0.9166666666666666
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"labels.py\": \"import re\\ndef slugify_label(text):\\n    \\\"\\\"\\\"Trim text, lowercase it, and join words with single dashes.\\\"\\\"\\\"\\n    text = text.strip().lower()\\n    return re.sub(r'\\\\s+', '-', text)\"\n  },\n  \"summary\": \"Updated slugify_label to handle multiple spaces and trim outer whitespace.\"\n}"
+        "{\n  \"files\": {\n    \"labels.py\": \"import re\\ndef slugify_label(text):\\n    \\\"\\\"\\\"Trim text, lowercase it, and join words with single dashes.\\\"\\\"\\\"\\n    text = text.strip().lower()\\n    return re.sub(r'\\\\s+', '-', text)\"\n  },\n  \"summary\": \"Updated slugify_label to trim, lowercase, and collapse whitespace.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"labels.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"labels.py\"],\"summary\":\"Updated slugify_label to handle multiple spaces and trim outer whitespace.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"labels.py\"],\"summary\":\"Updated slugify_label to trim, lowercase, and collapse whitespace.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 3,
       "seed": 44,
       "task_id": "medium_implementation_inventory",
       "difficulty": "medium",
-      "score": 1.0,
+      "score": 0.9266666666666666,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9266666666666666
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"stock.py\": \"class InventoryTracker:\\n    def __init__(self):\\n        self._items = {}\\n\\n    def add_item(self, name, quantity):\\n        if quantity > 0:\\n            if name in self._items:\\n                self._items[name] += quantity\\n            else:\\n                self._items[name] = quantity\\n\\n    def remove_item(self, name, quantity):\\n        if name in self._items:\\n            if quantity > 0:\\n                self._items[name] = max(0, self._items[name] - quantity)\\n\\n    def available(self, name):\\n        return self._items.get(name, 0)\"\n  },\n  \"summary\": \"Implemented all methods for InventoryTracker.\"\n}"
+        "{\n  \"files\": {\n    \"stock.py\": \"class InventoryTracker:\\n    def __init__(self):\\n        self._items = {}\\n\\n    def add_item(self, name, quantity):\\n        if quantity > 0:\\n            if name in self._items:\\n                self._items[name] += quantity\\n            else:\\n                self._items[name] = quantity\\n\\n    def remove_item(self, name, quantity):\\n        if name in self._items:\\n            if quantity >= 0:\\n                self._items[name] = max(0, self._items[name] - quantity)\\n\\n    def available(self, name):\\n        return self._items.get(name, 0)\"\n  },\n  \"summary\": \"Implemented add_item, remove_item, and available methods.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"stock.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"stock.py\"],\"summary\":\"Implemented all methods for InventoryTracker.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"stock.py\"],\"summary\":\"Implemented add_item, remove_item, and available methods.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 4,
       "seed": 45,
       "task_id": "medium_repair_budget",
       "difficulty": "medium",
-      "score": 1.0,
+      "score": 0.9266666666666666,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9266666666666666
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"tracker.py\": \"class BudgetTracker:\\n    def __init__(self, limit):\\n        self.limit = limit\\n        self.spent = 0\\n\\n    def add_expense(self, amount):\\n        if amount < 0:\\n            return self.spent\\n        self.spent += amount\\n        return self.spent\\n\\n    def remaining(self):\\n        return self.limit - self.spent\\n\\n    def is_over_budget(self):\\n        return self.spent > self.limit\"\n  },\n  \"summary\": \"Fixed the add_expense method to correctly increase spent, updated remaining to properly calculate remaining budget, and corrected is_over_budget logic.\"\n}"
+        "{\n  \"files\": {\n    \"tracker.py\": \"class BudgetTracker:\\n    def __init__(self, limit):\\n        self.limit = limit\\n        self.spent = 0\\n\\n    def add_expense(self, amount):\\n        if amount < 0:\\n            return self.spent\\n        self.spent += amount\\n        return self.spent\\n\\n    def remaining(self):\\n        return self.limit - self.spent\\n\\n    def is_over_budget(self):\\n        return self.spent > self.limit\"\n  },\n  \"summary\": \"Fixed add_expense to correctly add expenses, updated remaining to properly calculate remaining budget, and corrected is_over_budget logic.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"tracker.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"tracker.py\"],\"summary\":\"Fixed the add_expense method to correctly increase spent, updated remaining to properly calculate remaining budget, and corrected is_over_budget logic.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"tracker.py\"],\"summary\":\"Fixed add_expense to correctly add expenses, updated remaining to properly calculate remaining budget, and corrected is_over_budget logic.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 3/3. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 3/3. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 5,
       "seed": 46,
       "task_id": "hard_integration_orders",
       "difficulty": "hard",
-      "score": 0.9732142857142856,
+      "score": 0.8985714285714286,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.9732142857142856
+        0.8985714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"catalog.py\": \"PRICES = {'tea': 4.5, 'coffee': 6.0, 'cake': 5.5}\\n\\ndef lookup_price(item_name):\\n    return PRICES[item_name]\",\n    \"checkout.py\": \"from catalog import lookup_price\\n\\ndef calculate_total(items, tax_rate):\\n    subtotal = 0.0\\n    for item_name, quantity in items.items():\\n        subtotal += lookup_price(item_name) * quantity\\n    return round(subtotal * (1 + tax_rate), 2)\",\n    \"summary.py\": \"from checkout import calculate_total\\n\\ndef render_receipt(items, tax_rate):\\n    total = calculate_total(items, tax_rate)\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Updated the checkout and summary functions to correctly calculate the total with tax and format it.\"\n}"
+        "{\n  \"files\": {\n    \"catalog.py\": \"PRICES = {'tea': 4.5, 'coffee': 6.0, 'cake': 5.5}\\n\\ndef lookup_price(item_name):\\n    return PRICES[item_name]\",\n    \"checkout.py\": \"from catalog import lookup_price\\n\\ndef calculate_total(items, tax_rate):\\n    subtotal = 0.0\\n    for item_name, quantity in items.items():\\n        subtotal += lookup_price(item_name) * quantity\\n    total = subtotal * (1 + tax_rate)\\n    return round(total, 2)\",\n    \"summary.py\": \"from checkout import calculate_total\\n\\ndef render_receipt(items, tax_rate):\\n    total = calculate_total(items, tax_rate)\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Fixed the calculation of subtotal by multiplying price and quantity, applied tax correctly, and formatted the total to two decimal places.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"catalog.py\",\"checkout.py\",\"summary.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"catalog.py\",\"checkout.py\",\"summary.py\"],\"summary\":\"Updated the checkout and summary functions to correctly calculate the total with tax and format it.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"catalog.py\",\"checkout.py\",\"summary.py\"],\"summary\":\"Fixed the calculation of subtotal by multiplying price and quantity, applied tax correctly, and formatted the total to two decimal places.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass. Penalty applied: -0.03 for inefficient or no-op behavior."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass. Penalty applied: -0.03 for inefficient or no-op behavior."
     },
     {
       "episode": 6,
       "seed": 47,
       "task_id": "hard_repair_auth",
       "difficulty": "hard",
-      "score": 1.0,
+      "score": 0.9285714285714286,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9285714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"identity.py\": \"USERS = {'admin': 'secret', 'guest': 'guest'}\\n\\ndef authenticate(username, password):\\n    return USERS.get(username) == password\",\n    \"session.py\": \"from identity import authenticate\\nfrom permissions import can_edit, role_for\\n\\ndef build_session(username, password):\\n    if authenticate(username, password):\\n        role = role_for(username)\\n        return {'user': username, 'role': role, 'can_edit': can_edit(role)}\\n    return None\"\n  },\n  \"summary\": \"Fixed the authentication check in identity.py and adjusted session creation logic in session.py.\"\n}"
+        "{\n  \"files\": {\n    \"identity.py\": \"USERS = {'admin': 'secret', 'guest': 'guest'}\\n\\ndef authenticate(username, password):\\n    return USERS.get(username) == password\",\n    \"session.py\": \"from identity import authenticate\\nfrom permissions import can_edit, role_for\\n\\ndef build_session(username, password):\\n    if not authenticate(username, password):\\n        return None\\n    role = role_for(username)\\n    return {'user': username, 'role': role, 'can_edit': can_edit(role)}\"\n  },\n  \"summary\": \"Fixed authentication check in identity.py and session creation logic in session.py.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"identity.py\",\"permissions.py\",\"session.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"identity.py\",\"session.py\"],\"summary\":\"Fixed the authentication check in identity.py and adjusted session creation logic in session.py.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"identity.py\",\"session.py\"],\"summary\":\"Fixed authentication check in identity.py and session creation logic in session.py.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 7,
       "seed": 48,
       "task_id": "hard_integration_config",
       "difficulty": "hard",
-      "score": 0.5532142857142857,
-      "success": false,
-      "steps": 13,
-      "rewards": [
-        0.0,
-        0.0,
-        0.0,
-        0.5532142857142857,
-        0.0,
-        0.0,
-        0.5299999999999999,
-        0.0,
-        0.0,
-        0.29678571428571426,
-        0.0,
-        0.0,
-        0.3985714285714285
-      ],
-      "error": null,
-      "model_responses": [
-        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom parser import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Updated build_settings to merge parsed values over defaults and apply coercion.\"\n}",
-        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom parser import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        if key in settings:\\n            settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Updated service.py to ensure feature_enabled is set to True when specified in the config.\"\n}",
-        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom parser import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        if key in settings:\\n            settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Fixed feature_enabled coercion in build_settings.\"\n}",
-        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom parser import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        if key in settings:\\n            settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Fixed feature_enabled coercion in build_settings.\"\n}"
-      ],
-      "actions": [
-        "{\"action_type\":\"read_files\",\"paths\":[\"casting.py\",\"defaults.py\",\"parser.py\",\"service.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Updated build_settings to merge parsed values over defaults and apply coercion.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Updated service.py to ensure feature_enabled is set to True when specified in the config.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Fixed feature_enabled coercion in build_settings.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Fixed feature_enabled coercion in build_settings.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
-      ],
-      "final_feedback": "Test budget exhausted. Test run 4/4. Public tests 1/2. Hidden tests 1/2. No more test runs remain. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass. Penalty applied: -0.21 for inefficient or no-op behavior. Details: expected {'retries': 3, 'timeout': 30, 'feature_enabled': True, 'service_name': 'core'}, got {'retries': 3, 'timeout': 30, 'feature_enabled': False, 'service_name': 'core'} | expected {'retries': 1, 'timeout': 45, 'feature_enabled': False, 'service_name': 'core', 'region': 'apac'}, got {'retries': 1, 'timeout': 45, 'feature_enabled': False, 'service_name': 'core'}."
-    },
-    {
-      "episode": 8,
-      "seed": 49,
-      "task_id": "hard_pipeline_billing",
-      "difficulty": "hard",
-      "score": 0.9432142857142856,
-      "success": true,
-      "steps": 4,
-      "rewards": [
-        0.0,
-        0.0,
-        0.0,
-        0.9432142857142856
-      ],
-      "error": null,
-      "model_responses": [
-        "{\n  \"files\": {\n    \"billing_pipeline.py\": \"from filters import is_billable\\nfrom normalize import normalize_record\\nfrom totals import summarize_billable\\n\\ndef build_report(rows):\\n    cleaned = [normalize_record(row) for row in rows]\\n    billable = [row for row in cleaned if is_billable(row)]\\n    return summarize_billable(billable)\",\n    \"filters.py\": \"def is_billable(record):\\n    return record['status'] == 'active' and record['amount'] > 0\",\n    \"normalize.py\": \"def normalize_record(record):\\n    return {\\n        'name': record['name'].strip(),\\n        'status': record['status'].strip().lower(),\\n        'amount': float(record['amount']) if record['amount'] else 0.0,\\n    }\",\n    \"totals.py\": \"def summarize_billable(records):\\n    total = sum(item['amount'] for item in records)\\n    return {'billable_count': len(records), 'total_amount': total}\"\n  },\n  \"summary\": \"Updated normalization to trim and lowercase status, ensured amount is 0.0 for empty values, and preserved decimal precision in total amount.\"\n}"
-      ],
-      "actions": [
-        "{\"action_type\":\"read_files\",\"paths\":[\"billing_pipeline.py\",\"filters.py\",\"normalize.py\",\"totals.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"billing_pipeline.py\",\"filters.py\",\"normalize.py\",\"totals.py\"],\"summary\":\"Updated normalization to trim and lowercase status, ensured amount is 0.0 for empty values, and preserved decimal precision in total amount.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
-      ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass. Penalty applied: -0.06 for inefficient or no-op behavior."
-    },
-    {
-      "episode": 9,
-      "seed": 50,
-      "task_id": "hard_repository_tasks",
-      "difficulty": "hard",
-      "score": 0.9432142857142856,
-      "success": true,
-      "steps": 4,
-      "rewards": [
-        0.0,
-        0.0,
-        0.0,
-        0.9432142857142856
-      ],
-      "error": null,
-      "model_responses": [
-        "{\n  \"files\": {\n    \"dashboard.py\": \"from repository import add_task, open_titles\\nfrom database import build_connection\\n\\ndef snapshot_open_titles(entries):\\n    conn = build_connection()\\n    for entry in entries:\\n        add_task(conn, entry['title'], entry.get('done', False))\\n    return open_titles(conn)\",\n    \"database.py\": \"import sqlite3\\n\\ndef build_connection():\\n    conn = sqlite3.connect(':memory:')\\n    conn.row_factory = sqlite3.Row\\n    conn.execute('CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)')\\n    return conn\",\n    \"repository.py\": \"def add_task(conn, title, done=False):\\n    conn.execute(\\n        'INSERT INTO tasks(title, done) VALUES (?, ?)',\\n        (title, int(done)),\\n    )\\n    conn.commit()\\n\\ndef open_titles(conn):\\n    rows = conn.execute(\\n        'SELECT title FROM tasks WHERE done = 0 ORDER BY id'\\n    ).fetchall()\\n    return [row['title'] for row in rows]\"\n  },\n  \"summary\": \"Fixed the logic in `add_task` to correctly store the done status and updated `open_titles` to filter out done tasks and maintain insertion order.\"\n}"
-      ],
-      "actions": [
-        "{\"action_type\":\"read_files\",\"paths\":[\"dashboard.py\",\"database.py\",\"repository.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"dashboard.py\",\"database.py\",\"repository.py\"],\"summary\":\"Fixed the logic in `add_task` to correctly store the done status and updated `open_titles` to filter out done tasks and maintain insertion order.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
-      ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass. Penalty applied: -0.06 for inefficient or no-op behavior."
-    },
-    {
-      "episode": 10,
-      "seed": 51,
-      "task_id": "easy_implementation_discount",
-      "difficulty": "easy",
-      "score": 0.9883333333333334,
-      "success": true,
-      "steps": 4,
-      "rewards": [
-        0.0,
-        0.0,
-        0.0,
-        0.9883333333333334
-      ],
-      "error": null,
-      "model_responses": [
-        "{\n  \"files\": {\n    \"offers.py\": \"def compute_total(subtotal, has_coupon):\\n    \\\"\\\"\\\"Return the final total after applying an optional coupon.\\\"\\\"\\\"\\n    if has_coupon:\\n        subtotal *= 0.80\\n    return round(subtotal, 2)\"\n  },\n  \"summary\": \"Implemented compute_total function with coupon logic and rounding.\"\n}"
-      ],
-      "actions": [
-        "{\"action_type\":\"read_files\",\"paths\":[\"offers.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"offers.py\"],\"summary\":\"Implemented compute_total function with coupon logic and rounding.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
-      ],
-      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
-    },
-    {
-      "episode": 11,
-      "seed": 52,
-      "task_id": "easy_repair_slugify",
-      "difficulty": "easy",
-      "score": 0.9883333333333334,
-      "success": true,
-      "steps": 4,
-      "rewards": [
-        0.0,
-        0.0,
-        0.0,
-        0.9883333333333334
-      ],
-      "error": null,
-      "model_responses": [
-        "{\n  \"files\": {\n    \"strings.py\": \"def clean_slug(text):\\n    \\\"\\\"\\\"Trim text, lowercase it, and join words with single dashes.\\\"\\\"\\\"\\n    import re\\n    text = text.strip().lower()\\n    return re.sub(r'\\\\s+', '-', text)\"\n  },\n  \"summary\": \"Updated clean_slug to handle multiple whitespace characters and trim outer spaces.\"\n}"
-      ],
-      "actions": [
-        "{\"action_type\":\"read_files\",\"paths\":[\"strings.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"strings.py\"],\"summary\":\"Updated clean_slug to handle multiple whitespace characters and trim outer spaces.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
-      ],
-      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
-    },
-    {
-      "episode": 12,
-      "seed": 53,
-      "task_id": "medium_implementation_inventory",
-      "difficulty": "medium",
-      "score": 1.0,
-      "success": true,
-      "steps": 4,
-      "rewards": [
-        0.0,
-        0.0,
-        0.0,
-        1.0
-      ],
-      "error": null,
-      "model_responses": [
-        "{\n  \"files\": {\n    \"stock.py\": \"class StockLedger:\\n    def __init__(self):\\n        self._items = {}\\n\\n    def add_item(self, name, quantity):\\n        if quantity > 0:\\n            if name in self._items:\\n                self._items[name] += quantity\\n            else:\\n                self._items[name] = quantity\\n\\n    def remove_item(self, name, quantity):\\n        if name in self._items and quantity > 0:\\n            self._items[name] = max(0, self._items[name] - quantity)\\n\\n    def available(self, name):\\n        return self._items.get(name, 0)\"\n  },\n  \"summary\": \"Implemented all methods for StockLedger class.\"\n}"
-      ],
-      "actions": [
-        "{\"action_type\":\"read_files\",\"paths\":[\"stock.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"stock.py\"],\"summary\":\"Implemented all methods for StockLedger class.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
-      ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
-    },
-    {
-      "episode": 13,
-      "seed": 54,
-      "task_id": "medium_repair_budget",
-      "difficulty": "medium",
-      "score": 1.0,
-      "success": true,
-      "steps": 4,
-      "rewards": [
-        0.0,
-        0.0,
-        0.0,
-        1.0
-      ],
-      "error": null,
-      "model_responses": [
-        "{\n  \"files\": {\n    \"budget.py\": \"class BudgetTracker:\\n    def __init__(self, limit):\\n        self.limit = limit\\n        self.spent = 0\\n\\n    def add_expense(self, amount):\\n        if amount < 0:\\n            return self.spent\\n        self.spent += amount\\n        return self.spent\\n\\n    def remaining(self):\\n        return self.limit - self.spent\\n\\n    def is_over_budget(self):\\n        return self.spent > self.limit\"\n  },\n  \"summary\": \"Fixed add_expense to correctly add to spent, updated remaining to subtract spent from limit, and corrected is_over_budget logic.\"\n}"
-      ],
-      "actions": [
-        "{\"action_type\":\"read_files\",\"paths\":[\"budget.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"budget.py\"],\"summary\":\"Fixed add_expense to correctly add to spent, updated remaining to subtract spent from limit, and corrected is_over_budget logic.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
-      ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 3/3. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
-    },
-    {
-      "episode": 14,
-      "seed": 55,
-      "task_id": "hard_integration_orders",
-      "difficulty": "hard",
-      "score": 0.9800000000000001,
+      "score": 0.88,
       "success": true,
       "steps": 7,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.12321428571428572,
+        0.5035714285714286,
         0.0,
         0.0,
-        0.9800000000000001
+        0.88
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"checkout.py\": \"from pricebook import lookup_price\\\\n\\\\ndef calculate_total(items, tax_rate):\\\\n    subtotal = 0.0\\\\n    for item_name, quantity in items.items():\\\\n        subtotal += lookup_price(item_name) * quantity\\\\n    total = subtotal * (1 + tax_rate)\\\\n    return round(total, 2)\",\n    \"summary.py\": \"from checkout import calculate_total\\\\n\\\\ndef render_receipt(items, tax_rate):\\\\n    total = calculate_total(items, tax_rate)\\\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Fixed the calculation of subtotal and applied tax correctly. Updated the rendering of the total to show two decimal places.\"\n}",
+        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom parser import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Updated build_settings to merge parsed config over defaults and apply coercion.\"\n}",
+        "{\n  \"files\": {\n    \"casting.py\": \"def coerce_value(key, value):\\n    if key in {'retries', 'timeout'}:\\n        return int(value)\\n    if key == 'feature_enabled':\\n        return value.lower() == 'true'\\n    return value\",\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom parser import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Fixed the feature_enabled coercion to handle case insensitivity.\"\n}"
+      ],
+      "actions": [
+        "{\"action_type\":\"read_files\",\"paths\":[\"casting.py\",\"defaults.py\",\"parser.py\",\"service.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Updated build_settings to merge parsed config over defaults and apply coercion.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"casting.py\",\"service.py\"],\"summary\":\"Fixed the feature_enabled coercion to handle case insensitivity.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
+      ],
+      "final_feedback": "Solved. Test run 2/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass. Penalty applied: -0.03 for inefficient or no-op behavior."
+    },
+    {
+      "episode": 8,
+      "seed": 49,
+      "task_id": "hard_pipeline_billing",
+      "difficulty": "hard",
+      "score": 0.8685714285714285,
+      "success": true,
+      "steps": 4,
+      "rewards": [
+        0.0,
+        0.0,
+        0.0,
+        0.8685714285714285
+      ],
+      "error": null,
+      "model_responses": [
+        "{\n  \"files\": {\n    \"billing_pipeline.py\": \"from filters import is_billable\\nfrom normalize import normalize_record\\nfrom totals import summarize_billable\\n\\ndef build_report(rows):\\n    cleaned = [normalize_record(row) for row in rows]\\n    billable = [row for row in cleaned if is_billable(row)]\\n    return summarize_billable(billable)\",\n    \"filters.py\": \"def is_billable(record):\\n    return record['status'] == 'active' and record['amount'] > 0\",\n    \"normalize.py\": \"def normalize_record(record):\\n    return {\\n        'name': record['name'].strip(),\\n        'status': record['status'].strip().lower(),\\n        'amount': float(record['amount']) if record['amount'] else 0.0,\\n    }\",\n    \"totals.py\": \"def summarize_billable(records):\\n    total = sum(item['amount'] for item in records)\\n    return {'billable_count': len(records), 'total_amount': total}\"\n  },\n  \"summary\": \"Updated normalization to trim and lowercase status, and fixed totals to preserve decimal places.\"\n}"
+      ],
+      "actions": [
+        "{\"action_type\":\"read_files\",\"paths\":[\"billing_pipeline.py\",\"filters.py\",\"normalize.py\",\"totals.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"billing_pipeline.py\",\"filters.py\",\"normalize.py\",\"totals.py\"],\"summary\":\"Updated normalization to trim and lowercase status, and fixed totals to preserve decimal places.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
+      ],
+      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass. Penalty applied: -0.06 for inefficient or no-op behavior."
+    },
+    {
+      "episode": 9,
+      "seed": 50,
+      "task_id": "hard_repository_tasks",
+      "difficulty": "hard",
+      "score": 0.8685714285714285,
+      "success": true,
+      "steps": 4,
+      "rewards": [
+        0.0,
+        0.0,
+        0.0,
+        0.8685714285714285
+      ],
+      "error": null,
+      "model_responses": [
+        "{\n  \"files\": {\n    \"dashboard.py\": \"from repository import add_task, open_titles\\nfrom database import build_connection\\n\\ndef snapshot_open_titles(entries):\\n    conn = build_connection()\\n    for entry in entries:\\n        add_task(conn, entry['title'], entry.get('done', False))\\n    return open_titles(conn)\",\n    \"database.py\": \"import sqlite3\\n\\ndef build_connection():\\n    conn = sqlite3.connect(':memory:')\\n    conn.row_factory = sqlite3.Row\\n    conn.execute('CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)')\\n    return conn\",\n    \"repository.py\": \"def add_task(conn, title, done=False):\\n    conn.execute(\\n        'INSERT INTO tasks(title, done) VALUES (?, ?)',\\n        (title, int(done)),\\n    )\\n    conn.commit()\\n\\n\\ndef open_titles(conn):\\n    rows = conn.execute(\\n        'SELECT title FROM tasks WHERE done = 0 ORDER BY id'\\n    ).fetchall()\\n    return [row['title'] for row in rows]\"\n  },\n  \"summary\": \"Updated the query in `open_titles` to filter out done tasks and order by id.\"\n}"
+      ],
+      "actions": [
+        "{\"action_type\":\"read_files\",\"paths\":[\"dashboard.py\",\"database.py\",\"repository.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"dashboard.py\",\"database.py\",\"repository.py\"],\"summary\":\"Updated the query in `open_titles` to filter out done tasks and order by id.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
+      ],
+      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass. Penalty applied: -0.06 for inefficient or no-op behavior."
+    },
+    {
+      "episode": 10,
+      "seed": 51,
+      "task_id": "easy_implementation_discount",
+      "difficulty": "easy",
+      "score": 0.9166666666666666,
+      "success": true,
+      "steps": 4,
+      "rewards": [
+        0.0,
+        0.0,
+        0.0,
+        0.9166666666666666
+      ],
+      "error": null,
+      "model_responses": [
+        "{\n  \"files\": {\n    \"offers.py\": \"def compute_total(subtotal, has_coupon):\\n    \\\"\\\"\\\"Return the final total after applying an optional coupon.\\\"\\\"\\\"\\n    if has_coupon:\\n        subtotal *= 0.80\\n    return round(subtotal, 2)\"\n  },\n  \"summary\": \"Implemented the function to apply a 20% discount if has_coupon is True and rounded the result to 2 decimal places.\"\n}"
+      ],
+      "actions": [
+        "{\"action_type\":\"read_files\",\"paths\":[\"offers.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"offers.py\"],\"summary\":\"Implemented the function to apply a 20% discount if has_coupon is True and rounded the result to 2 decimal places.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
+      ],
+      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
+    },
+    {
+      "episode": 11,
+      "seed": 52,
+      "task_id": "easy_repair_slugify",
+      "difficulty": "easy",
+      "score": 0.9166666666666666,
+      "success": true,
+      "steps": 4,
+      "rewards": [
+        0.0,
+        0.0,
+        0.0,
+        0.9166666666666666
+      ],
+      "error": null,
+      "model_responses": [
+        "{\n  \"files\": {\n    \"strings.py\": \"def clean_slug(text):\\n    \\\"\\\"\\\"Trim text, lowercase it, and join words with single dashes.\\\"\\\"\\\"\\n    import re\\n    text = text.strip().lower()\\n    return re.sub(r'\\\\s+', '-', text)\"\n  },\n  \"summary\": \"Updated clean_slug to handle trimming, lowercasing, and collapsing whitespace.\"\n}"
+      ],
+      "actions": [
+        "{\"action_type\":\"read_files\",\"paths\":[\"strings.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"strings.py\"],\"summary\":\"Updated clean_slug to handle trimming, lowercasing, and collapsing whitespace.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
+      ],
+      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
+    },
+    {
+      "episode": 12,
+      "seed": 53,
+      "task_id": "medium_implementation_inventory",
+      "difficulty": "medium",
+      "score": 0.9266666666666666,
+      "success": true,
+      "steps": 4,
+      "rewards": [
+        0.0,
+        0.0,
+        0.0,
+        0.9266666666666666
+      ],
+      "error": null,
+      "model_responses": [
+        "{\n  \"files\": {\n    \"stock.py\": \"class StockLedger:\\n    def __init__(self):\\n        self._items = {}\\n\\n    def add_item(self, name, quantity):\\n        if quantity > 0:\\n            if name in self._items:\\n                self._items[name] += quantity\\n            else:\\n                self._items[name] = quantity\\n\\n    def remove_item(self, name, quantity):\\n        if name in self._items:\\n            if self._items[name] >= quantity:\\n                self._items[name] -= quantity\\n            else:\\n                self._items[name] = 0\\n\\n    def available(self, name):\\n        return self._items.get(name, 0)\"\n  },\n  \"summary\": \"Implemented add_item, remove_item, and available methods.\"\n}"
+      ],
+      "actions": [
+        "{\"action_type\":\"read_files\",\"paths\":[\"stock.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"stock.py\"],\"summary\":\"Implemented add_item, remove_item, and available methods.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
+      ],
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
+    },
+    {
+      "episode": 13,
+      "seed": 54,
+      "task_id": "medium_repair_budget",
+      "difficulty": "medium",
+      "score": 0.9266666666666666,
+      "success": true,
+      "steps": 4,
+      "rewards": [
+        0.0,
+        0.0,
+        0.0,
+        0.9266666666666666
+      ],
+      "error": null,
+      "model_responses": [
+        "{\n  \"files\": {\n    \"budget.py\": \"class BudgetTracker:\\n    def __init__(self, limit):\\n        self.limit = limit\\n        self.spent = 0\\n\\n    def add_expense(self, amount):\\n        if amount < 0:\\n            return self.spent\\n        self.spent += amount\\n        return self.spent\\n\\n    def remaining(self):\\n        return self.limit - self.spent\\n\\n    def is_over_budget(self):\\n        return self.spent > self.limit\"\n  },\n  \"summary\": \"Fixed add_expense to correctly add expenses, updated remaining to subtract spent from limit, and corrected is_over_budget logic.\"\n}"
+      ],
+      "actions": [
+        "{\"action_type\":\"read_files\",\"paths\":[\"budget.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"budget.py\"],\"summary\":\"Fixed add_expense to correctly add expenses, updated remaining to subtract spent from limit, and corrected is_over_budget logic.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
+      ],
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 3/3. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
+    },
+    {
+      "episode": 14,
+      "seed": 55,
+      "task_id": "hard_integration_orders",
+      "difficulty": "hard",
+      "score": 0.91,
+      "success": true,
+      "steps": 7,
+      "rewards": [
+        0.0,
+        0.0,
+        0.0,
+        0.10857142857142857,
+        0.0,
+        0.0,
+        0.91
+      ],
+      "error": null,
+      "model_responses": [
+        "{\n  \"files\": {\n    \"checkout.py\": \"from pricebook import lookup_price\\\\n\\\\ndef calculate_total(items, tax_rate):\\\\n    subtotal = 0.0\\\\n    for item_name, quantity in items.items():\\\\n        subtotal += lookup_price(item_name) * quantity\\\\n    total = subtotal * (1 + tax_rate)\\\\n    return round(total, 2)\",\n    \"summary.py\": \"from checkout import calculate_total\\\\n\\\\ndef render_receipt(items, tax_rate):\\\\n    total = calculate_total(items, tax_rate)\\\\n    return f'Total due: {{total:.2f}}'\"\n  },\n  \"summary\": \"Fixed the calculation of subtotal and applied tax correctly. Updated the rendering of the total to show two decimal places.\"\n}",
         "{\n  \"files\": {\n    \"checkout.py\": \"from pricebook import lookup_price\\n\\ndef calculate_total(items, tax_rate):\\n    subtotal = 0.0\\n    for item_name, quantity in items.items():\\n        subtotal += lookup_price(item_name) * quantity\\n    total = subtotal * (1 + tax_rate)\\n    return round(total, 2)\",\n    \"summary.py\": \"from checkout import calculate_total\\n\\ndef render_receipt(items, tax_rate):\\n    total = calculate_total(items, tax_rate)\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Fixed syntax errors in checkout.py and summary.py\"\n}"
       ],
       "actions": [
@@ -414,50 +400,50 @@
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 2/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 2/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 15,
       "seed": 56,
       "task_id": "hard_repair_auth",
       "difficulty": "hard",
-      "score": 1.0,
+      "score": 0.8985714285714286,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.8985714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"identity.py\": \"USERS = {'admin': 'secret', 'guest': 'guest'}\\n\\ndef authenticate(username, password):\\n    return USERS.get(username) == password\",\n    \"session.py\": \"from identity import authenticate\\nfrom permissions import can_edit, role_for\\n\\ndef build_session(username, password):\\n    if not authenticate(username, password):\\n        return None\\n    role = role_for(username)\\n    return {'user': username, 'role': role, 'can_edit': can_edit(role)}\"\n  },\n  \"summary\": \"Fixed the authentication logic and session building process.\"\n}"
+        "{\n  \"files\": {\n    \"identity.py\": \"USERS = {'admin': 'secret', 'guest': 'guest'}\\n\\ndef authenticate(username, password):\\n    return USERS.get(username) == password\",\n    \"permissions.py\": \"def role_for(username):\\n    return 'admin' if username == 'admin' else 'viewer'\\n\\ndef can_edit(role):\\n    return role == 'admin'\",\n    \"session.py\": \"from identity import authenticate\\nfrom permissions import can_edit, role_for\\n\\ndef build_session(username, password):\\n    if not authenticate(username, password):\\n        return None\\n    role = role_for(username)\\n    return {'user': username, 'role': role, 'can_edit': can_edit(role)}\"\n  },\n  \"summary\": \"Fixed the authentication logic in identity.py and the session creation flow in session.py.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"identity.py\",\"permissions.py\",\"session.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"identity.py\",\"session.py\"],\"summary\":\"Fixed the authentication logic and session building process.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"identity.py\",\"permissions.py\",\"session.py\"],\"summary\":\"Fixed the authentication logic in identity.py and the session creation flow in session.py.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass. Penalty applied: -0.03 for inefficient or no-op behavior."
     },
     {
       "episode": 16,
       "seed": 57,
       "task_id": "hard_integration_config",
       "difficulty": "hard",
-      "score": 0.9800000000000001,
+      "score": 0.91,
       "success": true,
       "steps": 7,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.5532142857142857,
+        0.5035714285714286,
         0.0,
         0.0,
-        0.9800000000000001
+        0.91
       ],
       "error": null,
       "model_responses": [
@@ -473,103 +459,103 @@
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 2/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 2/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 17,
       "seed": 58,
       "task_id": "hard_pipeline_billing",
       "difficulty": "hard",
-      "score": 1.0,
+      "score": 0.9285714285714286,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9285714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"cleaning.py\": \"def normalize_record(record):\\n    return {\\n        'name': record['name'].strip(),\\n        'status': record['status'].strip().lower(),\\n        'amount': float(record['amount']) if record['amount'] else 0.0,\\n    }\",\n    \"totals.py\": \"def summarize_billable(records):\\n    total = sum(item['amount'] for item in records)\\n    return {'billable_count': len(records), 'total_amount': total}\"\n  },\n  \"summary\": \"Updated normalization to trim and lowercase status, and fixed total amount to preserve decimals.\"\n}"
+        "{\n  \"files\": {\n    \"cleaning.py\": \"def normalize_record(record):\\n    return {\\n        'name': record['name'].strip(),\\n        'status': record['status'].strip().lower(),\\n        'amount': float(record['amount']) if record['amount'] else 0.0,\\n    }\",\n    \"totals.py\": \"def summarize_billable(records):\\n    total = sum(item['amount'] for item in records)\\n    return {'billable_count': len(records), 'total_amount': total}\"\n  },\n  \"summary\": \"Updated status normalization and preserved decimal totals.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"billing_pipeline.py\",\"cleaning.py\",\"filters.py\",\"totals.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"cleaning.py\",\"totals.py\"],\"summary\":\"Updated normalization to trim and lowercase status, and fixed total amount to preserve decimals.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"cleaning.py\",\"totals.py\"],\"summary\":\"Updated status normalization and preserved decimal totals.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 18,
       "seed": 59,
       "task_id": "hard_repository_tasks",
       "difficulty": "hard",
-      "score": 1.0,
+      "score": 0.9285714285714286,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9285714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"repository.py\": \"def add_task(conn, title, done=False):\\n    conn.execute(\\n        'INSERT INTO tasks(title, done) VALUES (?, ?)',\\n        (title, int(done)),\\n    )\\n    conn.commit()\\n\\ndef open_titles(conn):\\n    rows = conn.execute(\\n        'SELECT title FROM tasks WHERE done = 0 ORDER BY id'\\n    ).fetchall()\\n    return [row['title'] for row in rows]\"\n  },\n  \"summary\": \"Fixed the done flag inversion in add_task and updated the query in open_titles to select undone tasks.\"\n}"
+        "{\n  \"files\": {\n    \"repository.py\": \"def add_task(conn, title, done=False):\\n    conn.execute(\\n        'INSERT INTO tasks(title, done) VALUES (?, ?)',\\n        (title, int(done)),\\n    )\\n    conn.commit()\\n\\ndef open_titles(conn):\\n    rows = conn.execute(\\n        'SELECT title FROM tasks WHERE done = 0 ORDER BY id'\\n    ).fetchall()\\n    return [row['title'] for row in rows]\"\n  },\n  \"summary\": \"Fixed the query in open_titles to filter out done tasks and order by id.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"database.py\",\"repository.py\",\"service.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"repository.py\"],\"summary\":\"Fixed the done flag inversion in add_task and updated the query in open_titles to select undone tasks.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"repository.py\"],\"summary\":\"Fixed the query in open_titles to filter out done tasks and order by id.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 19,
       "seed": 60,
       "task_id": "easy_implementation_discount",
       "difficulty": "easy",
-      "score": 0.9883333333333334,
+      "score": 0.9166666666666666,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.9883333333333334
+        0.9166666666666666
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"pricing.py\": \"def discount_total(subtotal, has_coupon):\\n    \\\"\\\"\\\"Return the final total after applying an optional coupon.\\\"\\\"\\\"\\n    if has_coupon:\\n        subtotal *= 0.85  # Apply 15% discount\\n    return round(subtotal, 2)  # Round to 2 decimal places\"\n  },\n  \"summary\": \"Implemented discount_total function with coupon logic and rounding.\"\n}"
+        "{\n  \"files\": {\n    \"pricing.py\": \"def discount_total(subtotal, has_coupon):\\n    \\\"\\\"\\\"Return the final total after applying an optional coupon.\\\"\\\"\\\"\\n    if has_coupon:\\n        subtotal *= 0.85\\n    return round(subtotal, 2)\"\n  },\n  \"summary\": \"Implemented discount logic and rounding.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"pricing.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"pricing.py\"],\"summary\":\"Implemented discount_total function with coupon logic and rounding.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"pricing.py\"],\"summary\":\"Implemented discount logic and rounding.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 20,
       "seed": 61,
       "task_id": "easy_repair_slugify",
       "difficulty": "easy",
-      "score": 0.9883333333333334,
+      "score": 0.9166666666666666,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.9883333333333334
+        0.9166666666666666
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"slugify.py\": \"import re\\ndef slugify_label(text):\\n    \\\"\\\"\\\"Trim text, lowercase it, and join words with single dashes.\\\"\\\"\\\"\\n    trimmed = text.strip()\\n    lowercased = trimmed.lower()\\n    return re.sub(r'\\\\s+', '-', lowercased)\"\n  },\n  \"summary\": \"Updated slugify_label to handle trimming, lowercasing, and collapsing whitespace.\"\n}"
+        "{\n  \"files\": {\n    \"slugify.py\": \"import re\\ndef slugify_label(text):\\n    \\\"\\\"\\\"Trim text, lowercase it, and join words with single dashes.\\\"\\\"\\\"\\n    text = text.strip().lower()\\n    return re.sub(r'\\\\s+', '-', text)\"\n  },\n  \"summary\": \"Updated slugify_label to handle trimming, lowercasing, and collapsing whitespace.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"slugify.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
@@ -577,47 +563,47 @@
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/3. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 21,
       "seed": 62,
       "task_id": "medium_implementation_inventory",
       "difficulty": "medium",
-      "score": 1.0,
+      "score": 0.9266666666666666,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9266666666666666
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"inventory.py\": \"class InventoryTracker:\\n    def __init__(self):\\n        self._items = {}\\n\\n    def add_item(self, name, quantity):\\n        if quantity > 0:\\n            if name in self._items:\\n                self._items[name] += quantity\\n            else:\\n                self._items[name] = quantity\\n\\n    def remove_item(self, name, quantity):\\n        if name in self._items:\\n            if quantity > 0:\\n                self._items[name] = max(0, self._items[name] - quantity)\\n\\n    def available(self, name):\\n        return self._items.get(name, 0)\"\n  },\n  \"summary\": \"Implemented all methods for InventoryTracker class.\"\n}"
+        "{\n  \"files\": {\n    \"inventory.py\": \"class InventoryTracker:\\n    def __init__(self):\\n        self._items = {}\\n\\n    def add_item(self, name, quantity):\\n        if quantity > 0:\\n            if name in self._items:\\n                self._items[name] += quantity\\n            else:\\n                self._items[name] = quantity\\n\\n    def remove_item(self, name, quantity):\\n        if name in self._items:\\n            self._items[name] = max(0, self._items[name] - quantity)\\n\\n    def available(self, name):\\n        return self._items.get(name, 0)\"\n  },\n  \"summary\": \"Implemented all methods for InventoryTracker.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"inventory.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"inventory.py\"],\"summary\":\"Implemented all methods for InventoryTracker class.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"inventory.py\"],\"summary\":\"Implemented all methods for InventoryTracker.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 22,
       "seed": 63,
       "task_id": "medium_repair_budget",
       "difficulty": "medium",
-      "score": 1.0,
+      "score": 0.9266666666666666,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9266666666666666
       ],
       "error": null,
       "model_responses": [
@@ -629,151 +615,158 @@
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 3/3. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 3/3. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 23,
       "seed": 64,
       "task_id": "hard_integration_orders",
       "difficulty": "hard",
-      "score": 0.9800000000000001,
+      "score": 0.9285714285714286,
       "success": true,
-      "steps": 7,
+      "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.07321428571428572,
-        0.0,
-        0.0,
-        0.9800000000000001
+        0.9285714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"checkout.py\": \"from pricebook import lookup_price\\\\n\\\\ndef calculate_total(items, tax_rate):\\\\n    subtotal = 0.0\\\\n    for item_name, quantity in items.items():\\\\n        subtotal += lookup_price(item_name) * quantity\\\\n    total_with_tax = subtotal * (1 + tax_rate)\\\\n    return round(total_with_tax, 2)\",\n    \"pricebook.py\": \"PRICES = {'tea': 4.5, 'coffee': 6.0, 'cake': 5.5}\\\\n\\\\ndef lookup_price(item_name):\\\\n    return PRICES[item_name]\",\n    \"receipt.py\": \"from checkout import calculate_total\\\\n\\\\ndef render_receipt(items, tax_rate):\\\\n    total = calculate_total(items, tax_rate)\\\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Fixed the calculation of subtotal and applied tax correctly. Updated the receipt rendering to show two decimal places.\"\n}",
-        "{\n  \"files\": {\n    \"checkout.py\": \"from pricebook import lookup_price\\n\\ndef calculate_total(items, tax_rate):\\n    subtotal = 0.0\\n    for item_name, quantity in items.items():\\n        subtotal += lookup_price(item_name) * quantity\\n    total_with_tax = subtotal * (1 + tax_rate)\\n    return round(total_with_tax, 2)\",\n    \"pricebook.py\": \"PRICES = {'tea': 4.5, 'coffee': 6.0, 'cake': 5.5}\\n\\ndef lookup_price(item_name):\\n    return PRICES[item_name]\",\n    \"receipt.py\": \"from checkout import calculate_total\\n\\ndef render_receipt(items, tax_rate):\\n    total = calculate_total(items, tax_rate)\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Fixed syntax errors in all files.\"\n}"
+        "{\n  \"files\": {\n    \"checkout.py\": \"from pricebook import lookup_price\\n\\ndef calculate_total(items, tax_rate):\\n    subtotal = 0.0\\n    for item_name, quantity in items.items():\\n        subtotal += lookup_price(item_name) * quantity\\n    total = subtotal * (1 + tax_rate)\\n    return round(total, 2)\",\n    \"receipt.py\": \"from checkout import calculate_total\\n\\ndef render_receipt(items, tax_rate):\\n    total = calculate_total(items, tax_rate)\\n    return f'Total due: {total:.2f}'\"\n  },\n  \"summary\": \"Fixed the calculation of subtotal by multiplying item price with quantity and applied tax correctly. Updated receipt rendering to display total with two decimal places.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"checkout.py\",\"pricebook.py\",\"receipt.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"checkout.py\",\"pricebook.py\",\"receipt.py\"],\"summary\":\"Fixed the calculation of subtotal and applied tax correctly. Updated the receipt rendering to show two decimal places.\"}",
-        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"checkout.py\",\"pricebook.py\",\"receipt.py\"],\"summary\":\"Fixed syntax errors in all files.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"checkout.py\",\"receipt.py\"],\"summary\":\"Fixed the calculation of subtotal by multiplying item price with quantity and applied tax correctly. Updated receipt rendering to display total with two decimal places.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 2/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 24,
       "seed": 65,
       "task_id": "hard_repair_auth",
       "difficulty": "hard",
-      "score": 1.0,
+      "score": 0.9285714285714286,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9285714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"identity.py\": \"USERS = {'admin': 'secret', 'guest': 'guest'}\\n\\ndef authenticate(username, password):\\n    return USERS.get(username) == password\",\n    \"session.py\": \"from identity import authenticate\\nfrom permissions import can_edit, role_for\\n\\ndef build_session(username, password):\\n    if not authenticate(username, password):\\n        return None\\n    role = role_for(username)\\n    return {'user': username, 'role': role, 'can_edit': can_edit(role)}\"\n  },\n  \"summary\": \"Fixed the authentication check and session creation logic.\"\n}"
+        "{\n  \"files\": {\n    \"identity.py\": \"USERS = {'admin': 'secret', 'guest': 'guest'}\\n\\ndef authenticate(username, password):\\n    return USERS.get(username) == password\",\n    \"session.py\": \"from identity import authenticate\\nfrom permissions import can_edit, role_for\\n\\ndef build_session(username, password):\\n    if not authenticate(username, password):\\n        return None\\n    role = role_for(username)\\n    return {'user': username, 'role': role, 'can_edit': can_edit(role)}\"\n  },\n  \"summary\": \"Fixed authentication check and session building logic.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"identity.py\",\"permissions.py\",\"session.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"identity.py\",\"session.py\"],\"summary\":\"Fixed the authentication check and session creation logic.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"identity.py\",\"session.py\"],\"summary\":\"Fixed authentication check and session building logic.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 3/3. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 25,
       "seed": 66,
       "task_id": "hard_integration_config",
       "difficulty": "hard",
-      "score": 0.9500000000000001,
-      "success": true,
-      "steps": 7,
+      "score": 0.5728571428571428,
+      "success": false,
+      "steps": 13,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        0.5532142857142857,
+        0.5035714285714286,
         0.0,
         0.0,
-        0.9500000000000001
+        0.48499999999999993,
+        0.0,
+        0.0,
+        0.46642857142857136,
+        0.0,
+        0.0,
+        0.5728571428571428
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom reader import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Updated build_settings to merge parsed overrides over defaults, preserving unspecified defaults.\"\n}",
-        "{\n  \"files\": {\n    \"casting.py\": \"def coerce_value(key, value):\\n    if key in {'retries', 'timeout'}:\\n        return int(value)\\n    if key == 'feature_enabled':\\n        return value.lower() == 'true'\\n    return value\",\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom reader import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Fixed feature_enabled coercion to handle case insensitivity.\"\n}"
+        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom reader import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Updated build_settings to merge parsed overrides over defaults and preserve unspecified defaults.\"\n}",
+        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom reader import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        if key in settings:\\n            settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Updated build_settings to ensure feature_enabled is correctly coerced.\"\n}",
+        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom reader import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        if key in settings:\\n            settings[key] = coerce_value(key, value)\\n    return settings\\n\"\n  },\n  \"summary\": \"Fixed the issue with feature_enabled not being set to True when specified in the config.\"\n}",
+        "{\n  \"files\": {\n    \"service.py\": \"from casting import coerce_value\\nfrom defaults import DEFAULTS\\nfrom reader import parse_config\\n\\ndef build_settings(text):\\n    parsed = parse_config(text)\\n    settings = DEFAULTS.copy()\\n    for key, value in parsed.items():\\n        if key in settings:\\n            settings[key] = coerce_value(key, value)\\n    return settings\"\n  },\n  \"summary\": \"Fixed feature_enabled coercion in build_settings.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"casting.py\",\"defaults.py\",\"reader.py\",\"service.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Updated build_settings to merge parsed overrides over defaults, preserving unspecified defaults.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Updated build_settings to merge parsed overrides over defaults and preserve unspecified defaults.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"casting.py\",\"service.py\"],\"summary\":\"Fixed feature_enabled coercion to handle case insensitivity.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Updated build_settings to ensure feature_enabled is correctly coerced.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Fixed the issue with feature_enabled not being set to True when specified in the config.\"}",
+        "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"service.py\"],\"summary\":\"Fixed feature_enabled coercion in build_settings.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 2/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass. Penalty applied: -0.03 for inefficient or no-op behavior."
+      "final_feedback": "Test budget exhausted. Test run 4/4. Public tests 1/2. Hidden tests 1/2. No more test runs remain. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass. Details: expected {'retries': 3, 'timeout': 30, 'feature_enabled': True, 'service_name': 'core'}, got {'retries': 3, 'timeout': 30, 'feature_enabled': False, 'service_name': 'core'} | expected {'retries': 1, 'timeout': 45, 'feature_enabled': False, 'service_name': 'core', 'region': 'apac'}, got {'retries': 1, 'timeout': 45, 'feature_enabled': False, 'service_name': 'core'}."
     },
     {
       "episode": 26,
       "seed": 67,
       "task_id": "hard_pipeline_billing",
       "difficulty": "hard",
-      "score": 1.0,
+      "score": 0.9285714285714286,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9285714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"normalize.py\": \"def normalize_record(record):\\n    return {\\n        'name': record['name'].strip(),\\n        'status': record['status'].strip().lower(),\\n        'amount': float(record['amount']) if record['amount'] else 0.0,\\n    }\",\n    \"report.py\": \"def summarize_billable(records):\\n    total = sum(item['amount'] for item in records)\\n    return {'billable_count': len(records), 'total_amount': total}\"\n  },\n  \"summary\": \"Normalized status to lowercase and trimmed, preserved decimal in total amount.\"\n}"
+        "{\n  \"files\": {\n    \"normalize.py\": \"def normalize_record(record):\\n    return {\\n        'name': record['name'].strip(),\\n        'status': record['status'].strip().lower(),\\n        'amount': float(record['amount']) if record['amount'] else 0.0,\\n    }\",\n    \"report.py\": \"def summarize_billable(records):\\n    total = sum(item['amount'] for item in records)\\n    return {'billable_count': len(records), 'total_amount': total}\"\n  },\n  \"summary\": \"Normalized status to lowercase and preserved decimal precision in the report.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"billing_pipeline.py\",\"filters.py\",\"normalize.py\",\"report.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"normalize.py\",\"report.py\"],\"summary\":\"Normalized status to lowercase and trimmed, preserved decimal in total amount.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"normalize.py\",\"report.py\"],\"summary\":\"Normalized status to lowercase and preserved decimal precision in the report.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     },
     {
       "episode": 27,
       "seed": 68,
       "task_id": "hard_repository_tasks",
       "difficulty": "hard",
-      "score": 1.0,
+      "score": 0.9285714285714286,
       "success": true,
       "steps": 4,
       "rewards": [
         0.0,
         0.0,
         0.0,
-        1.0
+        0.9285714285714286
       ],
       "error": null,
       "model_responses": [
-        "{\n  \"files\": {\n    \"repository.py\": \"def add_task(conn, title, done=False):\\n    conn.execute(\\n        'INSERT INTO tasks(title, done) VALUES (?, ?)',\\n        (title, int(done)),\\n    )\\n    conn.commit()\\n\\ndef open_titles(conn):\\n    rows = conn.execute(\\n        'SELECT title FROM tasks WHERE done = 0 ORDER BY id'\\n    ).fetchall()\\n    return [row['title'] for row in rows]\"\n  },\n  \"summary\": \"Fixed the done flag handling in add_task and updated the query in open_titles to filter out done tasks and order by id.\"\n}"
+        "{\n  \"files\": {\n    \"repository.py\": \"def add_task(conn, title, done=False):\\n    conn.execute(\\n        'INSERT INTO tasks(title, done) VALUES (?, ?)',\\n        (title, int(done)),\\n    )\\n    conn.commit()\\n\\ndef open_titles(conn):\\n    rows = conn.execute(\\n        'SELECT title FROM tasks WHERE done = 0 ORDER BY id'\\n    ).fetchall()\\n    return [row['title'] for row in rows]\"\n  },\n  \"summary\": \"Updated the open_titles function to filter out done tasks and order by id.\"\n}"
       ],
       "actions": [
         "{\"action_type\":\"read_files\",\"paths\":[\"database.py\",\"repository.py\",\"service.py\"],\"files\":[],\"summary\":\"Load workspace files\"}",
-        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"repository.py\"],\"summary\":\"Fixed the done flag handling in add_task and updated the query in open_titles to filter out done tasks and order by id.\"}",
+        "{\"action_type\":\"update_files\",\"paths\":[],\"files\":[\"repository.py\"],\"summary\":\"Updated the open_titles function to filter out done tasks and order by id.\"}",
         "{\"action_type\":\"run_lint\",\"paths\":[],\"files\":[],\"summary\":\"\"}",
         "{\"action_type\":\"run_tests\",\"paths\":[],\"files\":[],\"summary\":\"\"}"
       ],
-      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.03 after a clean lint pass."
+      "final_feedback": "Solved. Test run 1/4. Public tests 2/2. Hidden tests 2/2. Public and hidden tests passed. Reward components include hidden-test progress, efficiency, and quality. Workflow bonus applied: +0.02 after a clean lint pass."
     }
   ]
 }
