@@ -237,7 +237,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         self._last_lint_issues = list(lint_report["issues"])
 
         if lint_report["clean"]:
-            self._pending_bonus = min(0.05, self._pending_bonus + 0.03)
+            self._pending_bonus = min(0.02, self._pending_bonus + 0.02)
             feedback = "Lint clean. The next test run gets a small workflow bonus."
         else:
             feedback = (
@@ -295,7 +295,7 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         bonus_applied = self._pending_bonus
         final_score = max(
             0.0,
-            min(1.0, float(result["score"]) + (0.10 * efficiency_score) + bonus_applied - penalty_applied),
+            min(1.0, float(result["score"]) + (0.08 * efficiency_score) + bonus_applied - penalty_applied),
         )
 
         self._solved = bool(result["success"])

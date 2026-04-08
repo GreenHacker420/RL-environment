@@ -349,7 +349,7 @@ def evaluate_workspace(
     hidden_component = hidden_ratio if run_hidden else 0.0
     load_validity = 1.0 if public_results.get("load_ok", False) and (not hidden_results or hidden_results.get("load_ok", False)) else 0.0
     score = _clamp(
-        (0.40 * public_ratio)
+        (0.35 * public_ratio)
         + (0.25 * hidden_component)
         + (0.15 * float(quality["score"]))
         + (0.10 * load_validity)
