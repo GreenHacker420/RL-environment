@@ -355,6 +355,33 @@ required in the TRL wrapper.
 - emits exact `[START]`, `[STEP]`, `[END]` lines
 - writes `results.json`
 
+Environment variables used by [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py):
+
+- `HF_TOKEN`
+  required secret used as the `api_key` for the OpenAI-compatible client
+- `API_BASE_URL`
+  optional endpoint override, defaults to `https://router.huggingface.co/v1`
+- `MODEL_NAME`
+  optional model id override, defaults to `Qwen/Qwen2.5-72B-Instruct`
+
+How to get them:
+
+1. `HF_TOKEN`
+   create a Hugging Face access token at `https://huggingface.co/settings/tokens`
+2. `API_BASE_URL`
+   use `https://router.huggingface.co/v1` for the Hugging Face router unless you are pointing to another OpenAI-compatible provider
+3. `MODEL_NAME`
+   choose the model id you want to evaluate, for example `Qwen/Qwen2.5-72B-Instruct`
+
+How the code uses them:
+
+```python
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN,
+)
+```
+
 Run:
 
 ```bash
