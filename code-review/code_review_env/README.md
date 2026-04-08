@@ -247,14 +247,15 @@ than relying only on prose.
 
 ## Repository Layout
 
+The repo is intentionally flat. Most environment logic lives at the project
+root, with only the HTTP server pieces under `server/`.
+
 - [tasks.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/tasks.py)
   task descriptors, seeded workspace generation, and task metadata
 - [graders.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/graders.py)
-  deterministic execution harness and reward computation
+  deterministic execution harness, lint checks, and reward computation
 - [models.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/models.py)
   typed action, observation, and state models
-- [server/environment.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/server/environment.py)
-  main environment loop
 - [client.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/client.py)
   WebSocket client
 - [trl_env.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/trl_env.py)
@@ -263,6 +264,17 @@ than relying only on prose.
   reproducible baseline runner
 - [smoke_test.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/smoke_test.py)
   local sanity test
+- [server/app.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/server/app.py)
+  FastAPI/OpenEnv app entrypoint
+- [server/environment.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/server/environment.py)
+  main environment loop
+- [scripts/validate-submission.sh](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/scripts/validate-submission.sh)
+  local copy of the hackathon validator
+- [Dockerfile](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/Dockerfile)
+  single deployment Dockerfile used for local builds and HF Spaces
+
+Generated artifacts such as `__pycache__` are intentionally excluded from the
+repo and should not be committed.
 
 ## Built-in UI and Routes
 

@@ -1,5 +1,8 @@
 .env
 __pycache__/
 *.pyc
-outputs/*
-!outputs/.gitkeep
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+.DS_Store
