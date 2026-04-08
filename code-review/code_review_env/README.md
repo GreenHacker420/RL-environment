@@ -55,7 +55,7 @@ tools, deterministic grading, and trajectory-level reward.
 ### Environment design
 
 - Episodes are multi-step.
-- `read_files`, `update_files`, and `run_tests` are explicit actions.
+- `read_files`, `update_files`, `run_lint`, and `run_tests` are explicit actions.
 - Reward is shaped mainly on `run_tests`, with intermediate progress signal.
 - Episodes terminate on success, test-budget exhaustion, or step-budget exhaustion.
 
@@ -90,7 +90,7 @@ deterministic workspace variants from a task id and seed.
 | --- | --- | --- |
 | Easy | implementation, repair | one file, one function, 1-2 public tests |
 | Medium | implementation, repair | one module or class, 2-3 public tests |
-| Hard | integration, repair | 2-3 files, integration behavior, 3 public tests |
+| Hard | integration, repair | 3-4 files, repo-style integration behavior and hidden edge cases |
 
 Current seed templates:
 
@@ -100,6 +100,9 @@ Current seed templates:
 - `medium_repair_budget`
 - `hard_integration_orders`
 - `hard_repair_auth`
+- `hard_integration_config`
+- `hard_pipeline_billing`
+- `hard_repository_tasks`
 
 Each episode is generated locally from:
 
@@ -114,10 +117,11 @@ Each episode is generated locally from:
 
 Each episode works like this:
 
-1. `reset()` returns a task brief and the initial workspace snapshot.
-2. The agent may inspect files with `read_files`.
+1. `reset()` returns a task brief and a workspace manifest, not the full file contents.
+2. The agent inspects files with `read_files`.
 3. The agent edits workspace files with `update_files`.
-4. The agent calls `run_tests`.
+4. The agent may run `run_lint` for deterministic local lint feedback.
+5. The agent calls `run_tests`.
 5. The environment returns:
    - public test progress
    - structured failure details
@@ -134,6 +138,7 @@ Reward is issued mainly on `run_tests`.
 
 - `read_files`: `0.0`
 - `update_files`: `0.0`
+- `run_lint`: `0.0`
 - `run_tests`: shaped reward in `[0.0, 1.0]`
 
 Current `run_tests` formula:
@@ -149,6 +154,10 @@ Additional reward penalties:
 - no-op file updates reduce the next `run_tests` reward
 - rerunning tests without changing the workspace reduces the next `run_tests` reward
 - invalid update attempts accumulate a small penalty for the next test run
+
+Additional workflow bonuses:
+
+- a clean `run_lint` before `run_tests` adds a small deterministic workflow bonus
 
 The deterministic quality score checks:
 
@@ -172,7 +181,7 @@ Budgets:
 `ReviewAction` exposes explicit workspace tools:
 
 - `action_type`
-  one of `read_files`, `update_files`, `run_tests`
+  one of `read_files`, `update_files`, `run_lint`, `run_tests`
 - `paths`
   file paths to read when using `read_files`
 - `files`
@@ -199,10 +208,12 @@ ReviewAction(
 - `solved`
 - `task_brief`
 - `workspace_files`
+- `workspace_manifest`
 - `stdout`
 - `stderr`
 - `exit_code`
 - `feedback`
+- `lint_issues`
 - `failing_tests`
 - `failure_details`
 - `task_id`
@@ -274,6 +285,7 @@ The server exposes the default OpenEnv UI and API routes:
 - `/step` is stateful and should be tested via `/web/` or the Python/WebSocket client.
 - One-off `curl` calls to `/step` are not a reliable manual test because they do
   not preserve session state across the episode.
+- `reset()` intentionally returns a manifest first; use `read_files` to load source files.
 
 ## Run Locally
 
@@ -330,6 +342,11 @@ with client:
     reset_result = client.reset(difficulty="easy")
     observation = reset_result.observation
     print(observation.task_brief)
+    print(observation.workspace_manifest)
+
+    observation = client.step(
+        ReviewAction(action_type="read_files", paths=["pricing.py"])
+    ).observation
     print(observation.workspace_files)
 
     client.step(
@@ -342,6 +359,9 @@ with client:
         )
     )
 
+    lint_result = client.step(ReviewAction(action_type="run_lint"))
+    print(lint_result.observation.lint_issues)
+
     test_result = client.step(ReviewAction(action_type="run_tests"))
     print(test_result.reward)
     print(test_result.observation.feedback)
@@ -349,13 +369,14 @@ with client:
 
 ## TRL Tool Wrapper
 
-[trl_env.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/trl_env.py) exposes exactly two tool methods for `GRPOTrainer(environment_factory=CodeReviewToolEnv)`:
+[trl_env.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/trl_env.py) exposes tool methods for `GRPOTrainer(environment_factory=CodeReviewToolEnv)`:
 
 - `update_files(files: dict[str, str], summary: str = "")`
+- `run_lint()`
 - `run_tests()`
 
-The initial workspace snapshot is included in `reset()`, so `read_files` is not
-required in the TRL wrapper.
+The wrapper internally reads the workspace manifest during `reset()`, so
+`read_files` is not exposed as a separate public tool.
 
 ## Baseline Inference
 
@@ -408,7 +429,7 @@ python inference.py --url http://localhost:7860 --episodes 6 --seed 42
 Current committed local baseline from:
 
 ```bash
-python inference.py --url http://localhost:7860 --episodes 18 --seed 42
+python inference.py --url http://localhost:7860 --episodes 27 --seed 42
 ```
 
 using:
@@ -418,11 +439,11 @@ using:
 
 Results:
 
-- mean score: `0.9377`
-- std score: `0.1429`
-- easy mean: `0.9708`
-- medium mean: `0.9792`
-- hard mean: `0.8630`
+- mean score: `0.9716`
+- std score: `0.0854`
+- easy mean: `0.9883`
+- medium mean: `1.0000`
+- hard mean: `0.9535`
 
 These numbers are recorded in [results.json](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/results.json).
 If you switch models or endpoints, rerun [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)

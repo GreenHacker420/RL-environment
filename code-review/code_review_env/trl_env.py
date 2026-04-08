@@ -94,10 +94,12 @@ class CodeReviewToolEnv:
         self.reward = float(result.reward or 0.0)
         self.done = result.done
         observation = result.observation
-        issues = "\n- ".join(observation.lint_issues) if observation.lint_issues else "None"
+        issues = "None"
+        if observation.lint_issues:
+            issues = "\n- " + "\n- ".join(observation.lint_issues)
         return (
             f"{observation.feedback}\n"
-            f"Lint issues:\n- {issues}\n"
+            f"Lint issues:{issues}\n"
             f"Exit code: {observation.exit_code}"
         )
 
