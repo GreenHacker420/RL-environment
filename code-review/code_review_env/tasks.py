@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import random
 from typing import Any
 
 
@@ -7,772 +9,543 @@ def _code(*lines: str) -> str:
     return "\n".join(lines)
 
 
-TASKS: list[dict[str, Any]] = [
-    {
-        "id": "easy_off_by_one",
-        "difficulty": "easy",
-        "prompt": _code(
-            "def last_item(values):",
-            "    if not values:",
-            "        return None",
-            "    return values[len(values)]",
-        ),
-        "true_bug_line": 4,
-        "true_bug_type": "off-by-one error",
-        "safety_bug_type": "runtime",
-        "keywords": ["index", "range", "off-by-one"],
-        "fixed_code": _code(
-            "def last_item(values):",
-            "    if not values:",
-            "        return None",
-            "    return values[len(values) - 1]",
-        ),
-        "test_cases": [
-            {"input": [[1, 2, 3]], "expected": 3},
-            {"input": [[]], "expected": None},
-        ],
-    },
-    {
-        "id": "easy_wrong_operator",
-        "difficulty": "easy",
-        "prompt": _code(
-            "def is_adult(age):",
-            "    return age < 18",
-        ),
-        "true_bug_line": 2,
-        "true_bug_type": "wrong operator",
-        "keywords": ["comparison", "operator", "age"],
-        "fixed_code": _code(
-            "def is_adult(age):",
-            "    return age >= 18",
-        ),
-        "test_cases": [
-            {"input": [20], "expected": True},
-            {"input": [16], "expected": False},
-        ],
-    },
-    {
-        "id": "easy_missing_return",
-        "difficulty": "easy",
-        "prompt": _code(
-            "def square(n):",
-            "    result = n * n",
-        ),
-        "true_bug_line": 2,
-        "true_bug_type": "missing return",
-        "keywords": ["return", "result", "output"],
-        "fixed_code": _code(
-            "def square(n):",
-            "    result = n * n",
-            "    return result",
-        ),
-        "test_cases": [
-            {"input": [4], "expected": 16},
-            {"input": [-3], "expected": 9},
-        ],
-    },
-    {
-        "id": "easy_wrong_variable_name",
-        "difficulty": "easy",
-        "prompt": _code(
-            "def count_odds(numbers):",
-            "    total = 0",
-            "    for number in numbers:",
-            "        if number % 2 == 1:",
-            "            total += 1",
-            "    return count",
-        ),
-        "true_bug_line": 6,
-        "true_bug_type": "wrong variable name",
-        "safety_bug_type": "runtime",
-        "keywords": ["variable", "name", "undefined"],
-        "fixed_code": _code(
-            "def count_odds(numbers):",
-            "    total = 0",
-            "    for number in numbers:",
-            "        if number % 2 == 1:",
-            "            total += 1",
-            "    return total",
-        ),
-        "test_cases": [
-            {"input": [[1, 2, 3, 4, 5]], "expected": 3},
-            {"input": [[2, 4]], "expected": 0},
-        ],
-    },
-    {
-        "id": "easy_missing_zero_guard",
-        "difficulty": "easy",
-        "prompt": _code(
-            "def safe_ratio(total, count):",
-            "    return total / count",
-        ),
-        "true_bug_line": 2,
-        "true_bug_type": "missing zero guard",
-        "safety_bug_type": "runtime",
-        "keywords": ["zero", "guard", "division"],
-        "fixed_code": _code(
-            "def safe_ratio(total, count):",
-            "    if count == 0:",
-            "        return 0",
-            "    return total / count",
-        ),
-        "test_cases": [
-            {"input": [10, 2], "expected": 5.0},
-            {"input": [10, 0], "expected": 0},
-        ],
-    },
-    {
-        "id": "medium_stack",
-        "difficulty": "medium",
-        "prompt": _code(
-            "class Stack:",
-            "    def __init__(self):",
-            "        self.items = []",
-            "",
-            "    def push(self, item):",
-            "        self.items.append(item)",
-            "",
-            "    def pop(self):",
-            "        if not self.items:",
-            "            return None",
-            "        return self.items.pop(0)",
-            "",
-            "    def peek(self):",
-            "        if not self.items:",
-            "            return None",
-            "        return self.items[0]",
-        ),
-        "true_bugs": [
-            {
-                "line": 11,
-                "bug_type": "wrong index",
-                "keywords": ["stack", "lifo", "pop"],
-            },
-            {
-                "line": 16,
-                "bug_type": "wrong index",
-                "keywords": ["peek", "top", "last"],
-            },
-        ],
-        "true_bug_type": ["wrong index", "wrong index"],
-        "keywords": ["stack", "lifo", "top", "pop"],
-        "fixed_code": _code(
-            "class Stack:",
-            "    def __init__(self):",
-            "        self.items = []",
-            "",
-            "    def push(self, item):",
-            "        self.items.append(item)",
-            "",
-            "    def pop(self):",
-            "        if not self.items:",
-            "            return None",
-            "        return self.items.pop()",
-            "",
-            "    def peek(self):",
-            "        if not self.items:",
-            "            return None",
-            "        return self.items[-1]",
-        ),
-        "test_cases": [
-            {"steps": [["push", 1], ["push", 2], ["pop"]], "expected": 2},
-            {"steps": [["push", 4], ["peek"]], "expected": 4},
-        ],
-    },
-    {
-        "id": "medium_bank_account",
-        "difficulty": "medium",
-        "prompt": _code(
-            "class BankAccount:",
-            "    def __init__(self, balance=0):",
-            "        self.balance = balance",
-            "",
-            "    def deposit(self, amount):",
-            "        if amount < 0:",
-            "            return self.balance",
-            "        self.balance += value",
-            "        return self.balance",
-            "",
-            "    def withdraw(self, amount):",
-            "        if amount > self.balance:",
-            "            return self.balance",
-            "        self.balance += amount",
-            "        return self.balance",
-        ),
-        "true_bugs": [
-            {
-                "line": 8,
-                "bug_type": "wrong variable name",
-                "keywords": ["deposit", "value", "amount"],
-            },
-            {
-                "line": 14,
-                "bug_type": "wrong operator",
-                "keywords": ["withdraw", "subtract", "balance"],
-            },
-        ],
-        "true_bug_type": ["wrong variable name", "wrong operator"],
-        "keywords": ["balance", "deposit", "withdraw"],
-        "fixed_code": _code(
-            "class BankAccount:",
-            "    def __init__(self, balance=0):",
-            "        self.balance = balance",
-            "",
-            "    def deposit(self, amount):",
-            "        if amount < 0:",
-            "            return self.balance",
-            "        self.balance += amount",
-            "        return self.balance",
-            "",
-            "    def withdraw(self, amount):",
-            "        if amount > self.balance:",
-            "            return self.balance",
-            "        self.balance -= amount",
-            "        return self.balance",
-        ),
-        "test_cases": [
-            {"steps": [["deposit", 5]], "start": 10, "expected": 15},
-            {"steps": [["withdraw", 7]], "start": 10, "expected": 3},
-        ],
-    },
-    {
-        "id": "medium_linked_list",
-        "difficulty": "medium",
-        "prompt": _code(
-            "class LinkedList:",
-            "    def __init__(self):",
-            "        self.head = None",
-            "",
-            "    def append(self, value):",
-            "        node = {\"value\": value, \"next\": None}",
-            "        if self.head is None:",
-            "            return node",
-            "        current = self.head",
-            "        while current[\"next\"] is not None:",
-            "            current = current[\"next\"]",
-            "        current[\"next\"] = node",
-            "",
-            "    def find(self, value):",
-            "        current = self.head",
-            "        while current is not None:",
-            "            if current[\"value\"] == value:",
-            "                return False",
-            "            current = current[\"next\"]",
-            "        return None",
-        ),
-        "true_bugs": [
-            {
-                "line": 8,
-                "bug_type": "missing assignment",
-                "keywords": ["head", "append", "node"],
-            },
-            {
-                "line": 18,
-                "bug_type": "wrong return value",
-                "keywords": ["find", "return", "match"],
-            },
-        ],
-        "true_bug_type": ["missing assignment", "wrong return value"],
-        "keywords": ["linked list", "head", "find", "append"],
-        "fixed_code": _code(
-            "class LinkedList:",
-            "    def __init__(self):",
-            "        self.head = None",
-            "",
-            "    def append(self, value):",
-            "        node = {\"value\": value, \"next\": None}",
-            "        if self.head is None:",
-            "            self.head = node",
-            "            return",
-            "        current = self.head",
-            "        while current[\"next\"] is not None:",
-            "            current = current[\"next\"]",
-            "        current[\"next\"] = node",
-            "",
-            "    def find(self, value):",
-            "        current = self.head",
-            "        while current is not None:",
-            "            if current[\"value\"] == value:",
-            "                return current",
-            "            current = current[\"next\"]",
-            "        return None",
-        ),
-        "test_cases": [
-            {"values": [3, 5], "find": 5, "expected": {"value": 5, "next": None}},
-            {"values": [3], "find": 7, "expected": None},
-        ],
-    },
-    {
-        "id": "medium_file_processor",
-        "difficulty": "medium",
-        "prompt": _code(
-            "class FileProcessor:",
-            "    def count_lines(self, text):",
-            "        if not text:",
-            "            return 1",
-            "        return len(text.splitlines())",
-            "",
-            "    def file_extension(self, filename):",
-            "        parts = filename.split(\".\")",
-            "        if len(parts) == 1:",
-            "            return \"\"",
-            "        return parts[0]",
-        ),
-        "true_bugs": [
-            {
-                "line": 4,
-                "bug_type": "wrong return value",
-                "keywords": ["empty", "count", "lines"],
-            },
-            {
-                "line": 11,
-                "bug_type": "wrong index",
-                "keywords": ["extension", "last", "filename"],
-            },
-        ],
-        "true_bug_type": ["wrong return value", "wrong index"],
-        "keywords": ["file", "lines", "extension", "filename"],
-        "fixed_code": _code(
-            "class FileProcessor:",
-            "    def count_lines(self, text):",
-            "        if not text:",
-            "            return 0",
-            "        return len(text.splitlines())",
-            "",
-            "    def file_extension(self, filename):",
-            "        parts = filename.split(\".\")",
-            "        if len(parts) == 1:",
-            "            return \"\"",
-            "        return parts[-1]",
-        ),
-        "test_cases": [
-            {"method": "count_lines", "input": "", "expected": 0},
-            {"method": "file_extension", "input": "report.txt", "expected": "txt"},
-        ],
-    },
-    {
-        "id": "hard_calculator_validator",
-        "difficulty": "hard",
-        "prompt": {
-            "validator.py": _code(
-                "def is_number(value):",
-                "    return isinstance(value, (int, float))",
-                "",
-                "def ensure_divisor(value):",
-                "    return value == 0",
-            ),
-            "calculator.py": _code(
-                "from validator import ensure_divisor, is_number",
-                "",
-                "def divide(a, b):",
-                "    if not ensure_divisor:",
-                "        raise ValueError(\"divisor cannot be zero\")",
-                "    if not is_number(a) or not is_number(b):",
-                "        raise TypeError(\"numbers required\")",
-                "    return a // b",
-            ),
-        },
-        "true_bugs": [
-            {
-                "file": "validator.py",
-                "line": 5,
-                "bug_type": "wrong operator",
-                "keywords": ["divisor", "zero", "validator"],
-                "cross_module": False,
-            },
-            {
-                "file": "calculator.py",
-                "line": 4,
-                "bug_type": "integration bug",
-                "keywords": ["module", "call", "validator"],
-                "cross_module": True,
-            },
-            {
-                "file": "calculator.py",
-                "line": 8,
-                "bug_type": "wrong operator",
-                "keywords": ["division", "integer", "calculator"],
-                "cross_module": False,
-            },
-        ],
-        "true_bug_type": ["wrong operator", "integration bug", "wrong operator"],
-        "keywords": ["calculator", "validator", "module", "division", "zero"],
-        "fixed_code": {
-            "validator.py": _code(
-                "def is_number(value):",
-                "    return isinstance(value, (int, float))",
-                "",
-                "def ensure_divisor(value):",
-                "    return value != 0",
-            ),
-            "calculator.py": _code(
-                "from validator import ensure_divisor, is_number",
-                "",
-                "def divide(a, b):",
-                "    if not ensure_divisor(b):",
-                "        raise ValueError(\"divisor cannot be zero\")",
-                "    if not is_number(a) or not is_number(b):",
-                "        raise TypeError(\"numbers required\")",
-                "    return a / b",
-            ),
-        },
-        "test_cases": [
-            {"entry": "divide", "args": [8, 2], "expected": 4.0},
-            {"entry": "divide", "args": [8, 0], "expected_error": "ValueError"},
-        ],
-    },
-    {
-        "id": "hard_parser_formatter",
-        "difficulty": "hard",
-        "prompt": {
-            "parser.py": _code(
-                "def parse_record(text):",
-                "    parts = text.split(\",\")",
-                "    return {\"name\": parts[0], \"score\": int(parts[2])}",
-            ),
-            "formatter.py": _code(
-                "from parser import parse_records",
-                "",
-                "def format_record(text):",
-                "    record = parse_records(text)",
-                "    return f\"{record['name']} ({record['scores']})\"",
-            ),
-        },
-        "true_bugs": [
-            {
-                "file": "parser.py",
-                "line": 3,
-                "bug_type": "wrong index",
-                "keywords": ["score", "index", "parser"],
-                "cross_module": False,
-            },
-            {
-                "file": "formatter.py",
-                "line": 1,
-                "bug_type": "integration bug",
-                "keywords": ["import", "module", "formatter"],
-                "cross_module": True,
-            },
-            {
-                "file": "formatter.py",
-                "line": 5,
-                "bug_type": "wrong key",
-                "keywords": ["record", "score", "formatter"],
-                "cross_module": False,
-            },
-        ],
-        "true_bug_type": ["wrong index", "integration bug", "wrong key"],
-        "keywords": ["parser", "formatter", "module", "record", "score"],
-        "fixed_code": {
-            "parser.py": _code(
-                "def parse_record(text):",
-                "    parts = text.split(\",\")",
-                "    return {\"name\": parts[0], \"score\": int(parts[1])}",
-            ),
-            "formatter.py": _code(
-                "from parser import parse_record",
-                "",
-                "def format_record(text):",
-                "    record = parse_record(text)",
-                "    return f\"{record['name']} ({record['score']})\"",
-            ),
-        },
-        "test_cases": [
-            {"entry": "format_record", "args": ["Ada,99"], "expected": "Ada (99)"},
-        ],
-    },
-    {
-        "id": "hard_auth_session",
-        "difficulty": "hard",
-        "prompt": {
-            "auth.py": _code(
-                "def authenticate(username, password):",
-                "    users = {\"admin\": \"secret\", \"guest\": \"guest\"}",
-                "    return users.get(username) is password",
-                "",
-                "def user_role(username):",
-                "    return \"admin\" if username == \"admin\" else \"viewer\"",
-            ),
-            "session.py": _code(
-                "from auth import authenticate, user_role",
-                "",
-                "def create_session(username, password):",
-                "    if authenticate(username, password):",
-                "        return None",
-                "    return {\"user\": username, \"role\": role_for(username), \"active\": True}",
-            ),
-        },
-        "true_bugs": [
-            {
-                "file": "auth.py",
-                "line": 3,
-                "bug_type": "wrong operator",
-                "keywords": ["authenticate", "comparison", "auth"],
-                "cross_module": False,
-            },
-            {
-                "file": "session.py",
-                "line": 4,
-                "bug_type": "wrong condition",
-                "keywords": ["session", "condition", "authenticate"],
-                "cross_module": False,
-            },
-            {
-                "file": "session.py",
-                "line": 6,
-                "bug_type": "integration bug",
-                "keywords": ["role", "module", "session"],
-                "cross_module": True,
-            },
-        ],
-        "true_bug_type": ["wrong operator", "wrong condition", "integration bug"],
-        "keywords": ["auth", "session", "module", "role", "authenticate"],
-        "fixed_code": {
-            "auth.py": _code(
-                "def authenticate(username, password):",
-                "    users = {\"admin\": \"secret\", \"guest\": \"guest\"}",
-                "    return users.get(username) == password",
-                "",
-                "def user_role(username):",
-                "    return \"admin\" if username == \"admin\" else \"viewer\"",
-            ),
-            "session.py": _code(
-                "from auth import authenticate, user_role",
-                "",
-                "def create_session(username, password):",
-                "    if not authenticate(username, password):",
-                "        return None",
-                "    return {\"user\": username, \"role\": user_role(username), \"active\": True}",
-            ),
-        },
-        "test_cases": [
-            {
-                "entry": "create_session",
-                "args": ["admin", "secret"],
-                "expected": {"user": "admin", "role": "admin", "active": True},
-            },
-        ],
-    },
+TASKS: list[dict[str, str]] = [
+    {"id": "easy_implementation_discount", "difficulty": "easy", "family": "implementation"},
+    {"id": "easy_repair_slugify", "difficulty": "easy", "family": "repair"},
+    {"id": "medium_implementation_inventory", "difficulty": "medium", "family": "implementation"},
+    {"id": "medium_repair_budget", "difficulty": "medium", "family": "repair"},
+    {"id": "hard_integration_orders", "difficulty": "hard", "family": "integration"},
+    {"id": "hard_repair_auth", "difficulty": "hard", "family": "repair"},
 ]
 
 
-_TASK_RUNTIME_CONFIG: dict[str, dict[str, Any]] = {
-    "easy_off_by_one": {
-        "title": "Fix last-item lookup in helper utility",
-        "description": "A reviewer flagged an indexing issue in a helper used by list-processing code.",
-        "developer_note": "A customer reported this crashes on non-empty lists.",
-        "task_kind": "function",
-        "entry_point": "last_item",
-        "hidden_tests": [
-            {"input": [[9]], "expected": 9},
-            {"input": [["a", "b"]], "expected": "b"},
-        ],
-    },
-    "easy_wrong_operator": {
-        "title": "Correct adulthood check",
-        "description": "A validation helper is classifying users incorrectly around the age threshold.",
-        "developer_note": "The behavior should match the product rule: adult means 18 or older.",
-        "task_kind": "function",
-        "entry_point": "is_adult",
-        "hidden_tests": [
-            {"input": [18], "expected": True},
-            {"input": [17], "expected": False},
-        ],
-    },
-    "easy_missing_return": {
-        "title": "Restore return value in math helper",
-        "description": "A PR accidentally removed the result return from a simple utility function.",
-        "developer_note": "The implementation computes the right value but callers receive the wrong thing.",
-        "task_kind": "function",
-        "entry_point": "square",
-        "hidden_tests": [
-            {"input": [0], "expected": 0},
-            {"input": [5], "expected": 25},
-        ],
-    },
-    "easy_wrong_variable_name": {
-        "title": "Fix counter return in collection helper",
-        "description": "A small refactor introduced an undefined name in an aggregation helper.",
-        "developer_note": "The loop logic is fine; the final return path is not.",
-        "task_kind": "function",
-        "entry_point": "count_odds",
-        "hidden_tests": [
-            {"input": [[1, 1, 1]], "expected": 3},
-            {"input": [[0, 2, 8]], "expected": 0},
-        ],
-    },
-    "easy_missing_zero_guard": {
-        "title": "Handle zero divisors safely",
-        "description": "A ratio helper should avoid crashing when the denominator is zero.",
-        "developer_note": "Returning zero for zero-count inputs is acceptable for this code path.",
-        "task_kind": "function",
-        "entry_point": "safe_ratio",
-        "hidden_tests": [
-            {"input": [0, 0], "expected": 0},
-            {"input": [9, 3], "expected": 3.0},
-        ],
-    },
-    "medium_stack": {
-        "title": "Repair stack behavior after container refactor",
-        "description": "A stack class regressed after a list-handling cleanup. LIFO semantics must be restored.",
-        "developer_note": "Operations should behave like a normal stack, including empty-stack checks.",
-        "task_kind": "class",
-        "entry_point": "Stack",
-        "hidden_tests": [
-            {"steps": [["push", 1], ["push", 2], ["push", 3], ["pop"]], "expected": 3},
-            {"steps": [["push", "x"], ["peek"]], "expected": "x"},
-        ],
-    },
-    "medium_bank_account": {
-        "title": "Fix account balance updates",
-        "description": "A banking PR introduced regressions in deposit and withdrawal logic.",
-        "developer_note": "Negative deposits should be ignored, and withdrawals should subtract funds.",
-        "task_kind": "class",
-        "entry_point": "BankAccount",
-        "hidden_tests": [
-            {"steps": [["deposit", -5]], "start": 10, "expected": 10},
-            {"steps": [["withdraw", 20]], "start": 10, "expected": 10},
-        ],
-    },
-    "medium_linked_list": {
-        "title": "Repair append and find in linked list utility",
-        "description": "A linked-list helper no longer attaches the first node correctly and reports matches incorrectly.",
-        "developer_note": "The caller expects append to mutate the list and find to return the matching node.",
-        "task_kind": "class",
-        "entry_point": "LinkedList",
-        "hidden_tests": [
-            {"values": [1], "find": 1, "expected": {"value": 1, "next": None}},
-            {"values": [4, 6, 8], "find": 9, "expected": None},
-        ],
-    },
-    "medium_file_processor": {
-        "title": "Fix file processor edge cases",
-        "description": "A small utility class returns the wrong answers for empty text and file extensions.",
-        "developer_note": "Empty text should count as zero lines, and extensions come from the last suffix.",
-        "task_kind": "class",
-        "entry_point": "FileProcessor",
-        "hidden_tests": [
-            {"method": "count_lines", "input": "a\nb\nc", "expected": 3},
-            {"method": "file_extension", "input": "archive.tar.gz", "expected": "gz"},
-        ],
-    },
-    "hard_calculator_validator": {
-        "title": "Fix PR across calculator and validator modules",
-        "description": "A multi-file change broke numeric validation and division semantics.",
-        "developer_note": "The modules are meant to work together; one bug is in the integration path.",
-        "task_kind": "module",
-        "entry_module": "calculator",
-        "entry_point": "divide",
-        "hidden_tests": [
-            {"entry": "divide", "args": [9, 3], "expected": 3.0},
-            {"entry": "divide", "args": ["9", 3], "expected_error": "TypeError"},
-        ],
-    },
-    "hard_parser_formatter": {
-        "title": "Repair parser and formatter integration",
-        "description": "A formatting workflow broke after renaming parser helpers and record fields.",
-        "developer_note": "One failure is a wrong import, another is a schema mismatch.",
-        "task_kind": "module",
-        "entry_module": "formatter",
-        "entry_point": "format_record",
-        "hidden_tests": [
-            {"entry": "format_record", "args": ["Grace,100"], "expected": "Grace (100)"},
-            {"entry": "format_record", "args": ["Linus,0"], "expected": "Linus (0)"},
-        ],
-    },
-    "hard_auth_session": {
-        "title": "Repair authentication and session creation flow",
-        "description": "A session-management PR introduced auth regressions and one cross-module naming bug.",
-        "developer_note": "Valid credentials should produce an active session with the right role.",
-        "task_kind": "module",
-        "entry_module": "session",
-        "entry_point": "create_session",
-        "hidden_tests": [
-            {
-                "entry": "create_session",
-                "args": ["guest", "guest"],
-                "expected": {"user": "guest", "role": "viewer", "active": True},
-            },
-            {"entry": "create_session", "args": ["admin", "wrong"], "expected": None},
-        ],
-    },
-}
+MAX_TEST_RUNS = {"easy": 3, "medium": 4, "hard": 4}
+MAX_STEPS = {"easy": 8, "medium": 12, "hard": 14}
 
 
-_MAX_ATTEMPTS = {
-    "easy": 3,
-    "medium": 4,
-    "hard": 4,
-}
+def _variant_rng(task_id: str, seed: int | None) -> random.Random:
+    raw = f"{task_id}:{0 if seed is None else seed}".encode("utf-8")
+    digest = hashlib.sha256(raw).digest()
+    return random.Random(int.from_bytes(digest[:8], "big"))
 
 
-def _describe_test_case(task: dict[str, Any], case: dict[str, Any]) -> str:
-    kind = task["task_kind"]
-    if kind == "function":
-        return f"{task['entry_point']}{tuple(case['input'])!r} -> {case['expected']!r}"
-    if kind == "class":
-        if "steps" in case:
-            start = case.get("start", 0)
-            return f"{task['entry_point']} with start={start!r}, steps={case['steps']!r} -> {case['expected']!r}"
-        return f"{task['entry_point']} linked-list workflow -> {case['expected']!r}"
-    args = tuple(case.get("args", []))
-    if "expected_error" in case:
-        return f"{task['entry_point']}{args!r} raises {case['expected_error']}"
-    return f"{task['entry_point']}{args!r} -> {case['expected']!r}"
+def _descriptor_map() -> dict[str, dict[str, str]]:
+    return {task["id"]: task for task in TASKS}
 
 
-for task in TASKS:
-    runtime = _TASK_RUNTIME_CONFIG[task["id"]]
-    task.update(runtime)
-    task["public_tests"] = list(task["test_cases"])
-    task["public_test_descriptions"] = [
-        _describe_test_case(task, case) for case in task["public_tests"]
-    ]
-    task["max_attempts"] = _MAX_ATTEMPTS[task["difficulty"]]
-
-
-def get_tasks_by_difficulty(difficulty: str) -> list[dict[str, Any]]:
+def get_tasks_by_difficulty(difficulty: str) -> list[dict[str, str]]:
     normalized = difficulty.lower()
     return [task for task in TASKS if task["difficulty"] == normalized]
 
 
-def get_task_by_id(task_id: str) -> dict[str, Any]:
-    for task in TASKS:
-        if task["id"] == task_id:
-            return task
-    raise ValueError(f"Unknown task_id: {task_id}")
+def get_task_by_id(task_id: str) -> dict[str, str]:
+    try:
+        return _descriptor_map()[task_id]
+    except KeyError as exc:
+        raise ValueError(f"Unknown task_id: {task_id}") from exc
 
 
-def render_prompt(prompt: str | dict[str, str]) -> str:
-    if isinstance(prompt, str):
-        return prompt
+def build_workspace_summary(files: dict[str, str]) -> list[str]:
+    return [f"{path} ({len(content.splitlines())} lines)" for path, content in files.items()]
 
+
+def render_workspace(files: dict[str, str]) -> str:
     sections = []
-    for filename, code in prompt.items():
-        sections.append(f"# {filename}\n{code}")
+    for path, content in files.items():
+        sections.append(f"# {path}\n{content}")
     return "\n\n".join(sections)
 
 
-def find_task_by_rendered_prompt(prompt: str) -> dict[str, Any]:
-    for task in TASKS:
-        if render_prompt(task["prompt"]) == prompt:
-            return task
-    raise ValueError("Unknown prompt.")
+def _function_case(name: str, module: str, func: str, args: list[Any], expected: Any) -> dict[str, Any]:
+    return {
+        "name": name,
+        "kind": "function",
+        "module": module,
+        "callable": func,
+        "args": args,
+        "expected": expected,
+    }
 
 
-def build_observation_prompt(task: dict[str, Any], current_code: str | dict[str, str]) -> str:
-    code_block = render_prompt(current_code)
-    public_tests = "\n".join(
-        f"- {description}" for description in task["public_test_descriptions"]
-    )
-    note = task.get("developer_note", "")
-    return (
-        f"PR Title: {task['title']}\n"
-        f"Difficulty: {task['difficulty']}\n"
-        f"PR Description: {task['description']}\n"
-        f"Reviewer Note: {note}\n\n"
-        "Submit a revised implementation that fixes the buggy code. "
-        "Your score is driven mainly by public test progress, syntax validity, and improvement over prior attempts.\n\n"
-        f"Public tests:\n{public_tests}\n\n"
-        f"Current code:\n{code_block}"
-    )
+def _class_case(
+    name: str,
+    module: str,
+    class_name: str,
+    steps: list[dict[str, Any]],
+    expected: Any,
+    constructor_args: list[Any] | None = None,
+) -> dict[str, Any]:
+    return {
+        "name": name,
+        "kind": "class",
+        "module": module,
+        "class_name": class_name,
+        "constructor_args": constructor_args or [],
+        "steps": steps,
+        "expected": expected,
+    }
+
+
+def _build_easy_implementation_discount(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("easy_implementation_discount", seed)
+    file_name = rng.choice(["pricing.py", "offers.py", "totals.py"])
+    module = file_name[:-3]
+    func_name = rng.choice(["apply_discount", "discount_total", "compute_total"])
+    rate = rng.choice([0.10, 0.15, 0.20])
+    percent = int(rate * 100)
+
+    workspace_files = {
+        file_name: _code(
+            f"def {func_name}(subtotal, has_coupon):",
+            '    """Return the final total after applying an optional coupon."""',
+            "    raise NotImplementedError('implement the pricing rule')",
+        )
+    }
+
+    return {
+        "id": "easy_implementation_discount",
+        "difficulty": "easy",
+        "family": "implementation",
+        "title": "Implement coupon pricing helper",
+        "task_brief": (
+            f"Implement `{func_name}(subtotal, has_coupon)` in `{file_name}`. "
+            f"If `has_coupon` is true, apply a {percent}% discount to `subtotal`. "
+            "Always round the returned total to 2 decimal places."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [file_name],
+        "public_tests": [
+            _function_case("coupon_applied", module, func_name, [120.0, True], round(120.0 * (1 - rate), 2)),
+            _function_case("coupon_skipped", module, func_name, [49.99, False], 49.99),
+        ],
+        "hidden_tests": [
+            _function_case("small_discount", module, func_name, [19.95, True], round(19.95 * (1 - rate), 2)),
+            _function_case("zero_total", module, func_name, [0.0, True], 0.0),
+        ],
+    }
+
+
+def _build_easy_repair_slugify(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("easy_repair_slugify", seed)
+    file_name = rng.choice(["labels.py", "strings.py", "slugify.py"])
+    module = file_name[:-3]
+    func_name = rng.choice(["normalize_label", "slugify_label", "clean_slug"])
+
+    workspace_files = {
+        file_name: _code(
+            f"def {func_name}(text):",
+            '    """Trim text, lowercase it, and join words with single dashes."""',
+            "    return text.lower().replace(' ', '-')",
+        )
+    }
+
+    return {
+        "id": "easy_repair_slugify",
+        "difficulty": "easy",
+        "family": "repair",
+        "title": "Repair slug normalization helper",
+        "task_brief": (
+            f"Repair `{func_name}(text)` in `{file_name}`. "
+            "It should trim outer whitespace, lowercase the text, and collapse all internal whitespace runs into single dashes."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [file_name],
+        "public_tests": [
+            _function_case("trim_and_lower", module, func_name, ["  Hello World  "], "hello-world"),
+            _function_case("preserve_existing_dash", module, func_name, ["Already-Clean"], "already-clean"),
+        ],
+        "hidden_tests": [
+            _function_case("collapse_whitespace", module, func_name, ["Many   spaced\twords"], "many-spaced-words"),
+            _function_case("single_word", module, func_name, [" Python "], "python"),
+        ],
+    }
+
+
+def _build_medium_implementation_inventory(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("medium_implementation_inventory", seed)
+    file_name = rng.choice(["inventory.py", "stock.py"])
+    module = file_name[:-3]
+    class_name = rng.choice(["InventoryTracker", "StockLedger"])
+
+    workspace_files = {
+        file_name: _code(
+            f"class {class_name}:",
+            "    def __init__(self):",
+            "        self._items = {}",
+            "",
+            "    def add_item(self, name, quantity):",
+            "        raise NotImplementedError('implement add_item')",
+            "",
+            "    def remove_item(self, name, quantity):",
+            "        raise NotImplementedError('implement remove_item')",
+            "",
+            "    def available(self, name):",
+            "        raise NotImplementedError('implement available')",
+        )
+    }
+
+    return {
+        "id": "medium_implementation_inventory",
+        "difficulty": "medium",
+        "family": "implementation",
+        "title": "Implement inventory tracker class",
+        "task_brief": (
+            f"Implement `{class_name}` in `{file_name}`. "
+            "`add_item(name, quantity)` increases stock for positive quantities. "
+            "`remove_item(name, quantity)` decreases stock but must never go below zero. "
+            "`available(name)` returns current stock or zero for unknown items."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [file_name],
+        "public_tests": [
+            _class_case(
+                "add_and_read",
+                module,
+                class_name,
+                [
+                    {"method": "add_item", "args": ["tea", 3]},
+                    {"method": "available", "args": ["tea"]},
+                ],
+                3,
+            ),
+            _class_case(
+                "remove_not_below_zero",
+                module,
+                class_name,
+                [
+                    {"method": "add_item", "args": ["pens", 2]},
+                    {"method": "remove_item", "args": ["pens", 5]},
+                    {"method": "available", "args": ["pens"]},
+                ],
+                0,
+            ),
+            _class_case(
+                "missing_item",
+                module,
+                class_name,
+                [{"method": "available", "args": ["missing"]}],
+                0,
+            ),
+        ],
+        "hidden_tests": [
+            _class_case(
+                "ignore_non_positive_add",
+                module,
+                class_name,
+                [
+                    {"method": "add_item", "args": ["paper", 0]},
+                    {"method": "available", "args": ["paper"]},
+                ],
+                0,
+            ),
+            _class_case(
+                "multiple_updates",
+                module,
+                class_name,
+                [
+                    {"method": "add_item", "args": ["cups", 4]},
+                    {"method": "remove_item", "args": ["cups", 1]},
+                    {"method": "available", "args": ["cups"]},
+                ],
+                3,
+            ),
+        ],
+    }
+
+
+def _build_medium_repair_budget(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("medium_repair_budget", seed)
+    file_name = rng.choice(["budget.py", "tracker.py"])
+    module = file_name[:-3]
+    class_name = rng.choice(["BudgetTracker", "SpendTracker"])
+
+    workspace_files = {
+        file_name: _code(
+            f"class {class_name}:",
+            "    def __init__(self, limit):",
+            "        self.limit = limit",
+            "        self.spent = 0",
+            "",
+            "    def add_expense(self, amount):",
+            "        if amount < 0:",
+            "            return self.spent",
+            "        self.spent -= amount",
+            "        return self.spent",
+            "",
+            "    def remaining(self):",
+            "        if self.spent > self.limit:",
+            "            return 0",
+            "        return self.limit + self.spent",
+            "",
+            "    def is_over_budget(self):",
+            "        return self.spent < self.limit",
+        )
+    }
+
+    return {
+        "id": "medium_repair_budget",
+        "difficulty": "medium",
+        "family": "repair",
+        "title": "Repair budget tracking regressions",
+        "task_brief": (
+            f"Repair `{class_name}` in `{file_name}`. "
+            "Expenses should increase `spent`, remaining budget should subtract spent from limit, and over-budget detection should only be true once spending exceeds the limit."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [file_name],
+        "public_tests": [
+            _class_case(
+                "expense_increases_spent",
+                module,
+                class_name,
+                [{"method": "add_expense", "args": [30]}],
+                30,
+                constructor_args=[100],
+            ),
+            _class_case(
+                "remaining_budget",
+                module,
+                class_name,
+                [
+                    {"method": "add_expense", "args": [40]},
+                    {"method": "remaining", "args": []},
+                ],
+                60,
+                constructor_args=[100],
+            ),
+            _class_case(
+                "over_budget_check",
+                module,
+                class_name,
+                [
+                    {"method": "add_expense", "args": [120]},
+                    {"method": "is_over_budget", "args": []},
+                ],
+                True,
+                constructor_args=[100],
+            ),
+        ],
+        "hidden_tests": [
+            _class_case(
+                "ignore_negative",
+                module,
+                class_name,
+                [
+                    {"method": "add_expense", "args": [-5]},
+                    {"method": "remaining", "args": []},
+                ],
+                50,
+                constructor_args=[50],
+            ),
+            _class_case(
+                "not_over_budget",
+                module,
+                class_name,
+                [
+                    {"method": "add_expense", "args": [10]},
+                    {"method": "is_over_budget", "args": []},
+                ],
+                False,
+                constructor_args=[100],
+            ),
+        ],
+    }
+
+
+def _build_hard_integration_orders(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("hard_integration_orders", seed)
+    catalog_file = rng.choice(["catalog.py", "pricebook.py"])
+    checkout_file = rng.choice(["checkout.py", "billing.py"])
+    receipt_file = rng.choice(["receipt.py", "summary.py"])
+    catalog_module = catalog_file[:-3]
+    checkout_module = checkout_file[:-3]
+    receipt_module = receipt_file[:-3]
+    tax_rate = rng.choice([0.05, 0.08, 0.1])
+    items = {"tea": 4.5, "coffee": 6.0, "cake": 5.5}
+
+    workspace_files = {
+        catalog_file: _code(
+            f"PRICES = {items!r}",
+            "",
+            "def lookup_price(item_name):",
+            "    return PRICES[item_name]",
+        ),
+        checkout_file: _code(
+            f"from {catalog_module} import lookup_price",
+            "",
+            "def calculate_total(items, tax_rate):",
+            "    subtotal = 0.0",
+            "    for item_name, quantity in items.items():",
+            "        subtotal += lookup_price(item_name) + quantity",
+            "    return round(subtotal + tax_rate, 2)",
+        ),
+        receipt_file: _code(
+            f"from {checkout_module} import calculate_total",
+            "",
+            "def render_receipt(items, tax_rate):",
+            "    total = calculate_total(items, tax_rate)",
+            "    return f'Total due: {int(total)}'",
+        ),
+    }
+
+    total_order = round((items["tea"] * 2 + items["cake"] * 1) * (1 + tax_rate), 2)
+    alt_order = round((items["coffee"] * 1 + items["cake"] * 2) * (1 + tax_rate), 2)
+
+    return {
+        "id": "hard_integration_orders",
+        "difficulty": "hard",
+        "family": "integration",
+        "title": "Repair order checkout integration",
+        "task_brief": (
+            f"Repair the workspace in `{catalog_file}`, `{checkout_file}`, and `{receipt_file}`. "
+            "The checkout layer should multiply item prices by quantity and apply tax to the subtotal. "
+            "The receipt layer should render the rounded total with two decimal places."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [catalog_file, checkout_file, receipt_file],
+        "public_tests": [
+            _function_case(
+                "checkout_total",
+                checkout_module,
+                "calculate_total",
+                [{"tea": 2, "cake": 1}, tax_rate],
+                total_order,
+            ),
+            _function_case(
+                "receipt_render",
+                receipt_module,
+                "render_receipt",
+                [{"tea": 2, "cake": 1}, tax_rate],
+                f"Total due: {total_order:.2f}",
+            ),
+            _function_case(
+                "alternate_order",
+                checkout_module,
+                "calculate_total",
+                [{"coffee": 1, "cake": 2}, tax_rate],
+                alt_order,
+            ),
+        ],
+        "hidden_tests": [
+            _function_case(
+                "single_item",
+                receipt_module,
+                "render_receipt",
+                [{"coffee": 1}, tax_rate],
+                f"Total due: {round(items['coffee'] * (1 + tax_rate), 2):.2f}",
+            ),
+            _function_case(
+                "empty_order",
+                checkout_module,
+                "calculate_total",
+                [{}, tax_rate],
+                0.0,
+            ),
+        ],
+    }
+
+
+def _build_hard_repair_auth(seed: int | None) -> dict[str, Any]:
+    rng = _variant_rng("hard_repair_auth", seed)
+    auth_file = rng.choice(["auth.py", "identity.py"])
+    permissions_file = rng.choice(["permissions.py", "policy.py"])
+    session_file = rng.choice(["session.py", "workspace.py"])
+    auth_module = auth_file[:-3]
+    permissions_module = permissions_file[:-3]
+    session_module = session_file[:-3]
+
+    workspace_files = {
+        auth_file: _code(
+            "USERS = {'admin': 'secret', 'guest': 'guest'}",
+            "",
+            "def authenticate(username, password):",
+            "    return USERS.get(username) is password",
+        ),
+        permissions_file: _code(
+            "def role_for(username):",
+            "    return 'admin' if username == 'admin' else 'viewer'",
+            "",
+            "def can_edit(role):",
+            "    return role == 'admin'",
+        ),
+        session_file: _code(
+            f"from {auth_module} import authenticate",
+            f"from {permissions_module} import can_edit, role_for",
+            "",
+            "def build_session(username, password):",
+            "    if authenticate(username, password):",
+            "        return None",
+            "    role = role_for(username)",
+            "    return {'user': username, 'role': role, 'can_edit': can_edit(username)}",
+        ),
+    }
+
+    return {
+        "id": "hard_repair_auth",
+        "difficulty": "hard",
+        "family": "repair",
+        "title": "Repair authentication workspace",
+        "task_brief": (
+            f"Repair the authentication flow across `{auth_file}`, `{permissions_file}`, and `{session_file}`. "
+            "Valid credentials should create a session, invalid credentials should return None, and edit permissions should depend on the resolved role."
+        ),
+        "workspace_files": workspace_files,
+        "editable_files": [auth_file, permissions_file, session_file],
+        "public_tests": [
+            _function_case(
+                "valid_admin_session",
+                session_module,
+                "build_session",
+                ["admin", "secret"],
+                {"user": "admin", "role": "admin", "can_edit": True},
+            ),
+            _function_case(
+                "invalid_login",
+                session_module,
+                "build_session",
+                ["admin", "wrong"],
+                None,
+            ),
+            _function_case(
+                "guest_permissions",
+                session_module,
+                "build_session",
+                ["guest", "guest"],
+                {"user": "guest", "role": "viewer", "can_edit": False},
+            ),
+        ],
+        "hidden_tests": [
+            _function_case(
+                "unknown_user",
+                session_module,
+                "build_session",
+                ["nobody", "secret"],
+                None,
+            ),
+            _function_case(
+                "viewer_role_check",
+                permissions_module,
+                "can_edit",
+                ["viewer"],
+                False,
+            ),
+        ],
+    }
+
+
+BUILDERS = {
+    "easy_implementation_discount": _build_easy_implementation_discount,
+    "easy_repair_slugify": _build_easy_repair_slugify,
+    "medium_implementation_inventory": _build_medium_implementation_inventory,
+    "medium_repair_budget": _build_medium_repair_budget,
+    "hard_integration_orders": _build_hard_integration_orders,
+    "hard_repair_auth": _build_hard_repair_auth,
+}
+
+
+def build_task(task_id: str, seed: int | None = None) -> dict[str, Any]:
+    descriptor = get_task_by_id(task_id)
+    task = BUILDERS[task_id](seed)
+    task["max_test_runs"] = MAX_TEST_RUNS[descriptor["difficulty"]]
+    task["max_steps"] = MAX_STEPS[descriptor["difficulty"]]
+    return task
