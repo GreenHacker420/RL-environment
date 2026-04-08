@@ -393,19 +393,28 @@ python inference.py --url http://localhost:7860 --episodes 6 --seed 42
 
 ## Baseline Scores
 
-Current committed local validation baseline:
+Current committed local baseline from:
 
-- mean score: `0.575`
-- std score: `0.4071`
-- easy mean: `0.7750`
-- medium mean: `0.4000`
-- hard mean: `0.5500`
+```bash
+python inference.py --url http://localhost:7860 --episodes 6 --seed 42
+```
 
-These numbers were produced against the current workspace environment and are
-recorded in [results.json](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/results.json).
-Before final submission, rerun [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)
-with your real `HF_TOKEN`, `API_BASE_URL`, and `MODEL_NAME` to refresh the
-baseline for your chosen evaluation model.
+using:
+
+- `API_BASE_URL=https://router.huggingface.co/v1`
+- `MODEL_NAME=Qwen/Qwen2.5-72B-Instruct`
+
+Results:
+
+- mean score: `1.0000`
+- std score: `0.0000`
+- easy mean: `1.0000`
+- medium mean: `1.0000`
+- hard mean: `1.0000`
+
+These numbers are recorded in [results.json](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/results.json).
+If you switch models or endpoints, rerun [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)
+to refresh the baseline for that configuration.
 
 ## Manual API Testing
 
