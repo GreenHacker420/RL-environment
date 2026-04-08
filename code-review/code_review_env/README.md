@@ -366,13 +366,19 @@ python inference.py --url http://localhost:7860 --episodes 6 --seed 42
 
 ## Baseline Scores
 
-Fill these in after the final run:
+Current committed local validation baseline:
 
-- mean score: pending
-- std score: pending
-- easy mean: pending
-- medium mean: pending
-- hard mean: pending
+- mean score: `0.575`
+- std score: `0.4071`
+- easy mean: `0.7750`
+- medium mean: `0.4000`
+- hard mean: `0.5500`
+
+These numbers were produced against the current workspace environment and are
+recorded in [results.json](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/results.json).
+Before final submission, rerun [inference.py](/Users/harsh/Desktop/gitRepos/openenv/code-review/code_review_env/inference.py)
+with your real `HF_TOKEN`, `API_BASE_URL`, and `MODEL_NAME` to refresh the
+baseline for your chosen evaluation model.
 
 ## Manual API Testing
 
@@ -401,6 +407,13 @@ Before submission:
 5. run the final baseline inference
 6. verify the Hugging Face Space is `Running`
 7. stop unnecessary Spaces before submitting
+
+You can also run the bundled validator:
+
+```bash
+chmod +x scripts/validate-submission.sh
+./scripts/validate-submission.sh https://your-space.hf.space .
+```
 
 ## Current Limitations
 
