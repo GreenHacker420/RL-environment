@@ -6,13 +6,21 @@ from typing import Any
 try:
     from .client import CodeReviewEnvClient
     from .models import ReviewAction
+    from .tasks import render_workspace
 except ImportError:
     from client import CodeReviewEnvClient
     from models import ReviewAction
+    from tasks import render_workspace
 
 
 ENV_URL = os.environ.get("ENV_URL", "http://localhost:7860")
 SUPPORTS_CONCURRENT_SESSIONS = True
+
+
+def _render_workspace_block(files: dict[str, str]) -> str:
+    if not files:
+        return "No workspace files returned."
+    return render_workspace(files)
 
 
 class CodeReviewToolEnv:
@@ -21,51 +29,73 @@ class CodeReviewToolEnv:
         self._client.connect()
         self.reward = 0.0
         self.done = False
-        self._summary = ""
 
     def reset(self, **kwargs: Any) -> str:
         difficulty = kwargs.get("difficulty", "easy")
-        result = self._client.reset(difficulty=difficulty)
+        task_id = kwargs.get("task_id")
+        result = self._client.reset(difficulty=difficulty, task_id=task_id)
         self.reward = 0.0
         self.done = False
-        self._summary = ""
-        return result.observation.prompt
+        observation = result.observation
+        return (
+            f"{observation.task_brief}\n\n"
+            f"Workspace:\n{_render_workspace_block(observation.workspace_files)}\n\n"
+            f"Test runs available: {observation.test_runs_used}/{observation.max_test_runs}\n"
+            f"Feedback: {observation.feedback}"
+        )
 
-    def describe_fix(self, summary: str) -> str:
+    def update_files(self, files: dict[str, str], summary: str = "") -> str:
         """
-        Record an optional short strategy note for the next code submission.
+        Update one or more editable workspace files before running tests.
 
         Args:
-            summary: A concise explanation of what you plan to change in the code
-                or why the current implementation is failing.
-        """
-        if self.done:
-            raise ValueError("Episode complete.")
-
-        self._summary = summary
-        return "Strategy recorded. Call submit_fix with revised code."
-
-    def submit_fix(self, fixed_code: str | dict[str, str]) -> str:
-        """
-        Submit revised code for the active debugging task and receive test feedback.
-
-        Args:
-            fixed_code: The updated implementation. Use a single Python string for
-                easy and medium tasks, or a filename-to-code dictionary for hard
-                multi-file tasks.
+            files: Mapping from workspace file path to the full replacement file
+                contents for that path. Only editable files from the task may be
+                updated.
+            summary: Optional short note describing the intended change.
         """
         if self.done:
             raise ValueError("Episode complete.")
 
         result = self._client.step(
             ReviewAction(
-                fixed_code=fixed_code,
-                summary=self._summary,
+                action_type="update_files",
+                files=files,
+                summary=summary,
             )
         )
         self.reward = float(result.reward or 0.0)
         self.done = result.done
-        return result.observation.feedback
+        observation = result.observation
+        return (
+            f"{observation.feedback}\n\n"
+            f"Workspace:\n{_render_workspace_block(observation.workspace_files)}"
+        )
+
+    def run_tests(self) -> str:
+        """
+        Execute the task's deterministic test suite against the current workspace.
+
+        Args:
+            None.
+        """
+        if self.done:
+            raise ValueError("Episode complete.")
+
+        result = self._client.step(ReviewAction(action_type="run_tests"))
+        self.reward = float(result.reward or 0.0)
+        self.done = result.done
+        observation = result.observation
+        failure_block = ""
+        if observation.failure_details:
+            failure_block = "\nFailure details:\n- " + "\n- ".join(observation.failure_details)
+        return (
+            f"{observation.feedback}\n"
+            f"Reward: {self.reward:.2f}\n"
+            f"Public tests: {observation.tests_passed}/{observation.tests_total}\n"
+            f"Test runs used: {observation.test_runs_used}/{observation.max_test_runs}"
+            f"{failure_block}"
+        )
 
     def __del__(self) -> None:
         try:
