@@ -452,11 +452,11 @@ using:
 
 Results:
 
-- mean score: `0.9025`
-- std score: `0.0682`
+- mean score: `0.8979`
+- std score: `0.0815`
 - easy mean: `0.9167`
 - medium mean: `0.9267`
-- hard mean: `0.8871`
+- hard mean: `0.8788`
 
 These numbers are recorded in [results.json](/Users/harsh/Desktop/gitRepos/openenv/results.json).
 If you switch models or endpoints, rerun [inference.py](/Users/harsh/Desktop/gitRepos/openenv/inference.py)
@@ -471,6 +471,7 @@ The current repo is aligned with the Round 1 submission checklist:
 - `API_BASE_URL` and `MODEL_NAME` have defaults
 - `HF_TOKEN` is required and has no default
 - stdout logs use the exact `[START]`, `[STEP]`, `[END]` format
+- each recorded episode `score` in `results.json` is kept strictly inside `(0, 1)`
 - `openenv validate` passes
 - the Docker image builds and serves `/health`, `/schema`, `/reset`, and `/web/`
 - the environment is stateful over WebSockets and suitable for HF Spaces deployment
@@ -487,6 +488,10 @@ That makes the baseline more realistic without punishing correct solutions
 arbitrarily. Hard tasks still provide the main spread in scores, especially the
 config integration task, which can require multiple repair cycles or fail within
 budget.
+
+The baseline writer also keeps each recorded task score strictly inside `(0, 1)`
+to satisfy the hackathon validator requirement that per-task scores must never
+be exactly `0.0` or `1.0`.
 
 ## Manual API Testing
 
