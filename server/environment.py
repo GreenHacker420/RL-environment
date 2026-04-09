@@ -35,6 +35,14 @@ def _workspace_signature(files: dict[str, str]) -> str:
     return digest.hexdigest()
 
 
+def _strict_unit_interval(value: float, epsilon: float = 1e-4) -> float:
+    if value <= 0.0:
+        return epsilon
+    if value >= 1.0:
+        return 1.0 - epsilon
+    return value
+
+
 class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
     SUPPORTS_CONCURRENT_SESSIONS = True
 
@@ -293,9 +301,11 @@ class CodeReviewEnv(Environment[ReviewAction, ReviewObservation, ReviewState]):
         efficiency_score = (remaining_step_ratio + remaining_test_ratio) / 2
         penalty_applied = self._pending_penalty
         bonus_applied = self._pending_bonus
-        final_score = max(
-            0.0,
-            min(1.0, float(result["score"]) + (0.08 * efficiency_score) + bonus_applied - penalty_applied),
+        final_score = _strict_unit_interval(
+            max(
+                0.0,
+                min(1.0, float(result["score"]) + (0.08 * efficiency_score) + bonus_applied - penalty_applied),
+            )
         )
 
         self._solved = bool(result["success"])

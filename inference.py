@@ -28,6 +28,14 @@ MAX_TOKENS = 2600
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
+def strict_unit_interval(value: float, epsilon: float = 1e-4) -> float:
+    if value <= 0.0:
+        return epsilon
+    if value >= 1.0:
+        return 1.0 - epsilon
+    return value
+
+
 def load_env_file(path: str = ".env") -> None:
     env_path = Path(path)
     if not env_path.exists():
@@ -327,7 +335,7 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                     break
 
             state = env_client.state()
-            score = float(state.best_score)
+            score = strict_unit_interval(float(state.best_score))
             success = success or bool(state.solved)
         except Exception as exc:
             error_message = str(exc).replace("\n", " ").strip()
@@ -351,7 +359,7 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 "seed": episode_seed,
                 "task_id": task["id"],
                 "difficulty": task["difficulty"],
-                "score": score,
+                "score": strict_unit_interval(score),
                 "success": success,
                 "steps": steps_taken,
                 "rewards": rewards,

@@ -108,6 +108,15 @@ def _clamp(value: float) -> float:
     return max(0.0, min(1.0, value))
 
 
+def _strict_unit_interval(value: float, epsilon: float = 1e-4) -> float:
+    clamped = _clamp(value)
+    if clamped <= 0.0:
+        return epsilon
+    if clamped >= 1.0:
+        return 1.0 - epsilon
+    return clamped
+
+
 def _write_workspace(workdir: Path, workspace_files: dict[str, str]) -> None:
     for path, content in workspace_files.items():
         file_path = workdir / path
@@ -348,7 +357,7 @@ def evaluate_workspace(
     quality = quality_report(task, workspace_files)
     hidden_component = hidden_ratio if run_hidden else 0.0
     load_validity = 1.0 if public_results.get("load_ok", False) and (not hidden_results or hidden_results.get("load_ok", False)) else 0.0
-    score = _clamp(
+    score = _strict_unit_interval(
         (0.35 * public_ratio)
         + (0.25 * hidden_component)
         + (0.15 * float(quality["score"]))
