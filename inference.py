@@ -28,10 +28,10 @@ MAX_TOKENS = 2600
 JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
-def strict_unit_interval(value: float, epsilon: float = 1e-4) -> float:
-    if value <= 0.0:
+def strict_unit_interval(value: float, epsilon: float = 5e-3) -> float:
+    if value <= epsilon:
         return epsilon
-    if value >= 1.0:
+    if value >= 1.0 - epsilon:
         return 1.0 - epsilon
     return value
 
@@ -72,9 +72,12 @@ def log_step(step: int, action: str, reward: float, done: bool, error: str | Non
     )
 
 
-def log_end(success: bool, steps: int, rewards: list[float]) -> None:
+def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> None:
     reward_values = ",".join(f"{reward:.2f}" for reward in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} rewards={reward_values}", flush=True)
+    print(
+        f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={reward_values}",
+        flush=True,
+    )
 
 
 def require_api_key() -> str:
@@ -351,7 +354,12 @@ def run_inference(url: str, episodes: int, seed: int) -> dict[str, Any]:
                 env_client.close()
             except Exception:
                 pass
-            log_end(success=success, steps=steps_taken, rewards=rewards)
+            log_end(
+                success=success,
+                steps=steps_taken,
+                score=strict_unit_interval(score),
+                rewards=rewards,
+            )
 
         records.append(
             {

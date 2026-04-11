@@ -35,10 +35,10 @@ def _workspace_signature(files: dict[str, str]) -> str:
     return digest.hexdigest()
 
 
-def _strict_unit_interval(value: float, epsilon: float = 1e-4) -> float:
-    if value <= 0.0:
+def _strict_unit_interval(value: float, epsilon: float = 5e-3) -> float:
+    if value <= epsilon:
         return epsilon
-    if value >= 1.0:
+    if value >= 1.0 - epsilon:
         return 1.0 - epsilon
     return value
 

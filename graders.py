@@ -108,11 +108,11 @@ def _clamp(value: float) -> float:
     return max(0.0, min(1.0, value))
 
 
-def _strict_unit_interval(value: float, epsilon: float = 1e-4) -> float:
+def _strict_unit_interval(value: float, epsilon: float = 5e-3) -> float:
     clamped = _clamp(value)
-    if clamped <= 0.0:
+    if clamped <= epsilon:
         return epsilon
-    if clamped >= 1.0:
+    if clamped >= 1.0 - epsilon:
         return 1.0 - epsilon
     return clamped
 
